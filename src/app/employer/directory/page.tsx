@@ -6,30 +6,9 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { CandidateProfile, Profile } from '@/types';
 
-// Predefined lists for Swedish trades and cities for high usability
-const SWEDISH_TRADES = [
-  'Snickare',
-  'Bartender',
-  'Kock',
-  'Elektriker',
-  'Målare',
-  'Lärare',
-  'Sjuksköterska',
-  'Systemutvecklare',
-  'Butikssäljare',
-  'Allt-i-allo'
-];
-
-const SWEDISH_CITIES = [
-  'Stockholm',
-  'Göteborg',
-  'Malmö',
-  'Uppsala',
-  'Västerås',
-  'Örebro',
-  'Linköping',
-  'Helsingborg'
-];
+import { FLAT_TRADES as SWEDISH_TRADES, SWEDISH_CITIES } from '@/lib/constants';
+import { SaveButton } from '@/components/SaveButton';
+import { MessageButton } from '@/components/MessageButton';
 
 function EmployerDirectoryContent() {
   const router = useRouter();
@@ -385,25 +364,6 @@ function EmployerDirectoryContent() {
                   {!isFetchingCandidates && `${candidates.length} matchande profiler`}
                 </div>
               </div>
-              {!isAuthLoading && currentUser && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-[#4a6480] hidden sm:inline">
-                    {currentUser.email}
-                    {employerProfile?.role === "employer" && (
-                      <span className={`ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        hasPremium
-                          ? "bg-[#fff8ec] text-[#d97706] border border-[#fde68a]"
-                          : "bg-[#f5f9fd] text-[#4a6480] border border-[#e0eaf4]"
-                      }`}>
-                        {hasPremium ? "★ Premium" : "Standard"}
-                      </span>
-                    )}
-                  </span>
-                  <button type="button" onClick={handleLogout} className="rb-btn">
-                    Logga ut
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Redirect Feedback Banners */}
@@ -569,6 +529,21 @@ function EmployerDirectoryContent() {
                               </a>
                             </div>
                           )}
+                          {/* Action buttons */}
+                          <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid #e0eaf4', alignItems: 'center' }}>
+                            {currentUser && (
+                              <MessageButton
+                                recipientId={candidate.id}
+                                recipientName={details.full_name || 'Kandidat'}
+                              />
+                            )}
+                            {currentUser && (
+                              <SaveButton
+                                candidateId={candidate.id}
+                                employerId={currentUser.id}
+                              />
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <div className="locked-details-container">

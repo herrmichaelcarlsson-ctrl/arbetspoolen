@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { SWEDISH_CITIES, TRADES_BY_SECTOR } from '@/lib/constants';
 import ImageCropperModal from '@/components/ImageCropperModal';
+import { ProfileStrength } from '@/components/ProfileStrength';
 
 // Availability styling map for the live preview
 const AVAILABILITY_MAP: Record<string, { label: string; textClass: string; bgClass: string }> = {
@@ -89,8 +90,7 @@ export default function SeekerDashboard() {
           setAvailability(profile.availability || 'omgaende');
           setBio(profile.bio || '');
           // Ladda in sparade certifikat (om de finns, annars en tom array)
-          const certs = profile.certificates;
-          setCertificates(Array.isArray(certs) ? certs : (certs ? [certs] : []));
+          setCertificates(profile.certificates || []);
           setIsPremium(profile.is_premium || false);
           setAvatarUrl(profile.avatar_url || null);
           setIsPremiumLocked(profile.is_premium_locked ?? true);
@@ -293,6 +293,18 @@ export default function SeekerDashboard() {
                   {successMessage}
                 </div>
               )}
+
+              <ProfileStrength
+                fullName={fullName}
+                trade={trade}
+                city={city}
+                bio={bio}
+                phone={phone}
+                avatarUrl={avatarUrl}
+                avatarPreview={avatarPreview}
+                certificates={certificates}
+                experienceYears={experienceYears}
+              />
 
               <form onSubmit={handleSaveProfile} className="space-y-6 mt-8">
 

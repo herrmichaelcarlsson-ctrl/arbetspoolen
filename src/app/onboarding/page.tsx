@@ -4,17 +4,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/types';
+import { SWEDISH_CITIES, TRADES_BY_SECTOR } from '@/lib/constants';
+import ImageCropperModal from '@/components/ImageCropperModal';
 
-const TRADES = [
+const POPULAR_TRADES = [
   { id: 'snickare', label: 'Snickare', desc: 'Träarbete, stomme och inredning', icon: '🪚' },
   { id: 'elektriker', label: 'Elektriker', desc: 'Elinstallation och service', icon: '⚡' },
-  { id: 'rörmokare', label: 'Rörmokare / VVS', desc: 'Värme, ventilation och sanitet', icon: '🔧' },
-  { id: 'målare', label: 'Målare', desc: 'In- och utvändig målning', icon: '🖌️' },
-  { id: 'murare', label: 'Murare / Plattsättare', desc: 'Murning, puts och kakelsättning', icon: '🧱' },
-  { id: 'svetsare', label: 'Svetsare', desc: 'Stål- och metallkonstruktion', icon: '🔥' },
+  { id: 'romokare', label: 'Rörmokare', desc: 'Värme, ventilation och sanitet', icon: '🔧' },
+  { id: 'malare', label: 'Målare', desc: 'In- och utvändig målning', icon: '🖌️' },
+  { id: 'murare', label: 'Murare', desc: 'Murning och fasadarbeten', icon: '🧱' },
+  { id: 'plattsattare', label: 'Plattsättare', desc: 'Kakel, klinker och tätskikt', icon: '📐' },
   { id: 'bartender', label: 'Bartender', desc: 'Bar och servering', icon: '🍸' },
-  { id: 'kock', label: 'Kock / Kökspersonal', desc: 'Matlagning och köksdrift', icon: '👨‍🍳' },
-  { id: 'annat', label: 'Annat yrke', desc: 'Övriga yrken', icon: '🛠️' },
+  { id: 'kock', label: 'Kock', desc: 'Matlagning och köksdrift', icon: '👨‍🍳' },
 ];
 
 const AVAILABILITIES = [
@@ -49,6 +50,8 @@ export default function OnboardingPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,17 +75,28 @@ export default function OnboardingPage() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { setErrorMessage('Bilden får max vara 5 MB.'); return; }
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    if (file.size > 8 * 1024 * 1024) { setErrorMessage('Bilden får max vara 8 MB.'); return; }
+    
+    // Read the file as a data URL to pass to the cropper
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedImageSrc(reader.result as string);
+      setIsCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
     setErrorMessage(null);
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    setAvatarFile(croppedBlob as any);
+    setAvatarPreview(URL.createObjectURL(croppedBlob));
   };
 
   const uploadAvatar = async (uid: string): Promise<string | null> => {
     if (!avatarFile) return null;
     setAvatarUploading(true);
     try {
-      const ext = avatarFile.name.split('.').pop();
+      const ext = 'jpg'; // Cropped image is always converted to high-quality JPEG
       const path = `${uid}/avatar.${ext}`;
       const { error } = await supabase.storage.from('avatars').upload(path, avatarFile, { upsert: true });
       if (error) throw error;
@@ -112,7 +126,7 @@ export default function OnboardingPage() {
     if (!userId) return;
     setSaving(true);
     setErrorMessage(null);
-    const finalTrade = trade === 'annat' ? customTrade : TRADES.find(t => t.id === trade)?.label || trade;
+    const finalTrade = trade === 'annat' ? customTrade : trade;
     try {
       const avatarUrl = await uploadAvatar(userId);
       const { error: pe } = await supabase.from('profiles').upsert({
@@ -324,17 +338,50 @@ export default function OnboardingPage() {
                     <div className="ob-section-title">Yrke & Ort</div>
                     <div className="ob-section-sub">Välj ditt primära yrke och var du befinner dig.</div>
 
-                    <label className="ob-label">Yrkesområde</label>
-                    <div className="ob-trade-grid">
-                      {TRADES.map(t => (
-                        <button key={t.id} type="button" className={`ob-trade-btn ${trade === t.id ? 'selected' : ''}`} onClick={() => setTrade(t.id)}>
-                          <span className="ob-trade-icon">{t.icon}</span>
-                          <div>
-                            <div className="ob-trade-name">{t.label}</div>
-                            <div className="ob-trade-desc">{t.desc}</div>
-                          </div>
-                        </button>
-                      ))}
+                    <div className="ob-group">
+                      <label className="ob-label">Välj yrkeskategori</label>
+                      <select
+                        required
+                        value={trade}
+                        onChange={(e) => {
+                          setTrade(e.target.value);
+                          if (e.target.value !== 'annat') setCustomTrade('');
+                        }}
+                        className="ob-input"
+                      >
+                        <option value="" disabled>Välj ett yrkesområde...</option>
+                        {TRADES_BY_SECTOR.map((sec) => (
+                          <optgroup key={sec.sector} label={sec.sector}>
+                            {sec.options.map((opt) => (
+                              <option key={opt.id} value={opt.label}>{opt.label}</option>
+                            ))}
+                          </optgroup>
+                        ))}
+                        <option value="annat">Annat yrke (specificera själv)...</option>
+                      </select>
+                    </div>
+
+                    <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }}>
+                      <span className="ob-label" style={{ display: 'block', marginBottom: '10px' }}>Snabbval populära yrken</span>
+                      <div className="ob-trade-grid">
+                        {POPULAR_TRADES.map(t => (
+                          <button 
+                            key={t.id} 
+                            type="button" 
+                            className={`ob-trade-btn ${trade === t.label ? 'selected' : ''}`} 
+                            onClick={() => {
+                              setTrade(t.label);
+                              setCustomTrade('');
+                            }}
+                          >
+                            <span className="ob-trade-icon">{t.icon}</span>
+                            <div>
+                              <div className="ob-trade-name">{t.label}</div>
+                              <div className="ob-trade-desc">{t.desc}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     {trade === 'annat' && (
@@ -347,7 +394,19 @@ export default function OnboardingPage() {
                     <div className="ob-grid2">
                       <div className="ob-group">
                         <label className="ob-label">Ort / Stad</label>
-                        <input type="text" className="ob-input" value={city} onChange={e => setCity(e.target.value)} placeholder="t.ex. Stockholm" />
+                        <input 
+                          type="text" 
+                          list="onboarding-cities"
+                          className="ob-input" 
+                          value={city} 
+                          onChange={e => setCity(e.target.value)} 
+                          placeholder="t.ex. Stockholm" 
+                        />
+                        <datalist id="onboarding-cities">
+                          {SWEDISH_CITIES.map(c => (
+                            <option key={c} value={c} />
+                          ))}
+                        </datalist>
                       </div>
                       <div className="ob-group">
                         <label className="ob-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -451,6 +510,12 @@ export default function OnboardingPage() {
         </div>
 
       </div>
+      <ImageCropperModal
+        imageSrc={selectedImageSrc}
+        isOpen={isCropperOpen}
+        onClose={() => setIsCropperOpen(false)}
+        onCropComplete={handleCropComplete}
+      />
     </>
   );
 }

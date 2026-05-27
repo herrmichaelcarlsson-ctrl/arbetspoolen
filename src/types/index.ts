@@ -11,6 +11,11 @@ export interface Profile {
   is_premium_locked: boolean;
   is_premium: boolean;
   is_admin: boolean;
+  company_name: string | null;
+  company_logo_url: string | null;
+  company_presentation: string | null;
+  company_website: string | null;
+  company_is_public: boolean;
   created_at: string;
   updated_at: string;
 }

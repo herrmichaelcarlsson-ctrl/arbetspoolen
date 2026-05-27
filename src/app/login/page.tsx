@@ -60,18 +60,11 @@ export default function LoginPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
 
-        .login-wrap { font-family: 'DM Sans', sans-serif; color: #111; background: #fff; min-height: 100vh; display: flex; flex-direction: column; }
-
-        /* NAV */
-        .login-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; border-bottom: 1px solid #e0eaf4; background: #fff; }
-        .login-nav img { display: block; height: 60px; width: auto; }
-        .login-nav-links { display: flex; gap: 8px; }
-        .rb-btn { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 7px 16px; border-radius: 99px; border: 1px solid #b8d0e8; background: transparent; color: #1a3a5c; cursor: pointer; transition: background 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-        .rb-btn:hover { background: #eaf3fb; }
-        .rb-btn-primary { background: #1a5fa8; border-color: #1a5fa8; color: #fff; font-weight: 500; }
-        .rb-btn-primary:hover { background: #134a85; }
+        /* Vi tar bort min-height: 100vh här eftersom AppShell redan hanterar höjden */
+        .login-wrap { font-family: 'DM Sans', sans-serif; color: #111; display: flex; flex-direction: column; height: 100%; }
 
         /* FORM AREA */
+        /* Flex: 1 gör att den fyller utrymmet mellan header och footer i AppShell */
         .login-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem; background: #f5f9fd; }
         .login-card { background: #fff; border: 1px solid #e0eaf4; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; }
         .login-card h1 { font-family: 'DM Serif Display', serif; font-size: 26px; color: #1a3a5c; margin: 0 0 0.25rem; }
@@ -101,23 +94,9 @@ export default function LoginPage() {
 
         .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .login-footer { padding: 1.25rem 2rem; border-top: 1px solid #e0eaf4; display: flex; justify-content: space-between; }
-        .login-footer span { font-size: 12px; color: #9ca3af; }
       `}</style>
 
       <div className="login-wrap">
-
-        <nav className="login-nav">
-          <a href="/">
-            <img src="/logo.png" alt="ARBETSpoolen" />
-          </a>
-          <div className="login-nav-links">
-            <a href="/register?role=seeker" className="rb-btn">För arbetssökare</a>
-            <a href="/register?role=employer" className="rb-btn">För arbetsgivare</a>
-          </div>
-        </nav>
-
         <div className="login-body">
           <div className="login-card">
             <h1>Logga in</h1>
@@ -169,12 +148,6 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-
-        <footer className="login-footer">
-          <span>© {new Date().getFullYear()} ARBETSpoolen · Sverige</span>
-          <span>Byggd med Next.js · Supabase · Stripe</span>
-        </footer>
-
       </div>
     </>
   );

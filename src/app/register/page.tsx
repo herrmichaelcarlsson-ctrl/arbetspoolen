@@ -39,19 +39,36 @@ export default function RegisterPage() {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) throw new Error(error.message);
-      if (!data.user)
-        throw new Error("Registreringen misslyckades. Vänligen försök igen.");
-
-      await supabase.from("profiles").insert({
-        id: data.user.id,
-        role,
-        experience_years: 0,
-        is_premium: false,
-        is_premium_locked: true,
+      // Skicka med rollen i metadata, så tar databas-triggern hand om profilskapandet!
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            role: role
+          }
+        }
       });
+      
+      if (error) throw new Error(error.message);
+      if (!data.user) throw new Error("Registreringen misslyckades. Vänligen försök igen.");
 
+      // Supabase returns a user with empty identities if the email already exists
+      // (to prevent email enumeration). Detect this case:
+      if (data.user.identities && data.user.identities.length === 0) {
+        setErrorMessage("Ett konto med denna e-postadress finns redan. Försök logga in istället.");
+        setLoading(false);
+        return;
+      }
+
+      // If email confirmation is required, session will be null
+      if (!data.session) {
+        setSuccessMessage("Konto skapat! Kolla din e-post för en bekräftelselänk. (Om du inte hittar den, kolla skräpposten.)");
+        setLoading(false);
+        return;
+      }
+
+      // Session exists = email confirmation disabled, user is logged in
       setSuccessMessage("Konto skapat! Omdirigerar till onboarding...");
       setTimeout(() => router.push("/onboarding"), 900);
     } catch (err: any) {

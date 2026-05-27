@@ -1,5 +1,7 @@
 "use client";
 
+import { CompanyBanner } from "@/components/CompanyBanner";
+
 export default function Home() {
   return (
     <>
@@ -8,10 +10,7 @@ export default function Home() {
 
         .rb-wrap { font-family: 'DM Sans', sans-serif; color: #111; background: #fff; min-height: 100vh; }
 
-        /* NAV */
-        .rb-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(224,234,244,0.8); position: sticky; top: 0; z-index: 100; }
-        .rb-logo img { display: block; height: 60px; width: auto; }
-        .rb-nav-links { display: flex; gap: 8px; }
+        /* NAV - Behövs inte längre här, men knapp-stilar behålls för andra knappar */
         .rb-btn { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 7px 16px; border-radius: 99px; border: 1px solid #b8d0e8; background: transparent; color: #1a3a5c; cursor: pointer; transition: background 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
         .rb-btn:hover { background: #eaf3fb; }
         .rb-btn-primary { background: #1a5fa8; border-color: #1a5fa8; color: #fff; font-weight: 500; }
@@ -117,7 +116,6 @@ export default function Home() {
         .rb-footer-text { font-size: 12px; color: #9ca3af; }
 
         @media (max-width: 600px) {
-          .rb-nav { padding: 0.75rem 1rem; }
           .rb-stats { margin: 1.5rem 1rem; }
           .rb-section { padding: 1rem 1rem 2rem; }
           .rb-how { grid-template-columns: 1fr; }
@@ -127,17 +125,6 @@ export default function Home() {
       `}</style>
 
       <div className="rb-wrap">
-
-        <nav className="rb-nav">
-          <div className="rb-logo">
-            <img src="/logo.png" alt="ARBETSpoolen" />
-          </div>
-          <div className="rb-nav-links">
-            <a href="/register?role=seeker" className="rb-btn">För arbetssökare</a>
-            <a href="/register?role=employer" className="rb-btn">För arbetsgivare</a>
-            <a href="/login" className="rb-btn rb-btn-primary">Logga in</a>
-          </div>
-        </nav>
 
         {/* HERO med bakgrundsbild och zoom-animation */}
         <section className="rb-hero">
@@ -162,6 +149,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <CompanyBanner />
 
         <div className="rb-stats">
           <div className="rb-stat">

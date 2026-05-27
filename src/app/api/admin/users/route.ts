@@ -11,8 +11,8 @@ async function verifyAdmin(request: NextRequest): Promise<{ userId: string } | n
   const { data: { user }, error } = await supabase.auth.getUser(token);
   if (error || !user) return null;
 
-  // Check admin status
-  const { data: profile } = await supabaseAdmin
+  // Check admin status using the standard client since profiles is public read
+  const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')
     .eq('id', user.id)
