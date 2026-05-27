@@ -223,7 +223,7 @@ export async function GET() {
       
       if (!prof) {
         results.push(`⚠️ No profile for ${u.email} - creating one...`);
-        const role = u.raw_user_metadata?.role || 'job_seeker';
+        const role = u.user_metadata?.role || 'job_seeker';
         const { error: insErr } = await supabaseAdmin.from('profiles').insert({
           id: u.id,
           role: role,
