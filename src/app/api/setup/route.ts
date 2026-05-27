@@ -81,6 +81,68 @@ export async function GET() {
       results.push("✅ company columns: exist");
     }
 
+    // 3a. Check certificates column
+    const { error: certColTest } = await supabaseAdmin
+      .from('profiles')
+      .select('certificates')
+      .limit(1);
+    
+    if (certColTest) {
+      results.push(`❌ certificates column MISSING - ${certColTest.message}`);
+      results.push("→ Run this SQL in Supabase Dashboard SQL Editor:");
+      results.push("  ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS certificates TEXT[] DEFAULT '{}';");
+    } else {
+      results.push("✅ certificates column: exists");
+    }
+
+    // 3b. Check saved_candidates table
+    const { error: savedTableTest } = await supabaseAdmin
+      .from('saved_candidates')
+      .select('id')
+      .limit(1);
+      
+    if (savedTableTest && (savedTableTest.code === '42P01' || savedTableTest.message.includes('does not exist'))) {
+      results.push("❌ saved_candidates table MISSING");
+      results.push("→ Run this SQL in Supabase Dashboard SQL Editor:");
+      results.push("  CREATE TABLE IF NOT EXISTS public.saved_candidates (");
+      results.push("    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),");
+      results.push("    employer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,");
+      results.push("    candidate_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,");
+      results.push("    note TEXT,");
+      results.push("    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),");
+      results.push("    UNIQUE(employer_id, candidate_id)");
+      results.push("  );");
+      results.push("  ALTER TABLE public.saved_candidates ENABLE ROW LEVEL SECURITY;");
+      results.push("  CREATE POLICY \"Employers can manage their saved candidates\" ON public.saved_candidates FOR ALL USING (auth.uid() = employer_id) WITH CHECK (auth.uid() = employer_id);");
+    } else {
+      results.push("✅ saved_candidates table: exists");
+    }
+
+    // 3c. Check messages table
+    const { error: messagesTableTest } = await supabaseAdmin
+      .from('messages')
+      .select('id')
+      .limit(1);
+      
+    if (messagesTableTest && (messagesTableTest.code === '42P01' || messagesTableTest.message.includes('does not exist'))) {
+      results.push("❌ messages table MISSING");
+      results.push("→ Run this SQL in Supabase Dashboard SQL Editor:");
+      results.push("  CREATE TABLE IF NOT EXISTS public.messages (");
+      results.push("    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),");
+      results.push("    sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,");
+      results.push("    recipient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,");
+      results.push("    content TEXT NOT NULL,");
+      results.push("    is_read BOOLEAN NOT NULL DEFAULT FALSE,");
+      results.push("    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())");
+      results.push("  );");
+      results.push("  ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;");
+      results.push("  CREATE POLICY \"Users can view messages they sent or received\" ON public.messages FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = recipient_id);");
+      results.push("  CREATE POLICY \"Users can insert messages they send\" ON public.messages FOR INSERT WITH CHECK (auth.uid() = sender_id);");
+      results.push("  CREATE POLICY \"Users can update messages they receive or send\" ON public.messages FOR UPDATE USING (auth.uid() = sender_id OR auth.uid() = recipient_id) WITH CHECK (auth.uid() = sender_id OR auth.uid() = recipient_id);");
+    } else {
+      results.push("✅ messages table: exists");
+    }
+
     // 4. List all users
     const { data: authUsers, error: authErr } = await supabaseAdmin.auth.admin.listUsers();
     

@@ -151,7 +151,32 @@ export default function MessagesPage() {
 
     setConversations(Array.from(convMap.values()));
     if (activeConvId) {
-      setActiveConv(convMap.get(activeConvId) || null);
+      const existing = convMap.get(activeConvId);
+      if (existing) {
+        setActiveConv(existing);
+      } else {
+        // Hämta profiluppgifter direkt om konversationen är helt ny
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, role, avatar_url')
+          .eq('id', activeConvId)
+          .single();
+        const { data: contact } = await supabase
+          .from('profile_contact_details')
+          .select('full_name')
+          .eq('profile_id', activeConvId)
+          .single();
+          
+        setActiveConv({
+          other_user_id: activeConvId,
+          other_name: contact?.full_name || 'Okänd användare',
+          other_role: profile?.role || 'job_seeker',
+          other_avatar: profile?.avatar_url || null,
+          last_message: '',
+          last_time: new Date().toISOString(),
+          unread_count: 0,
+        });
+      }
     }
   };
 
@@ -162,7 +187,33 @@ export default function MessagesPage() {
       .or(`and(sender_id.eq.${userId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${userId})`)
       .order('created_at', { ascending: true });
     setMessages(data || []);
-    setActiveConv(conversations.find(c => c.other_user_id === otherId) || null);
+
+    const existing = conversations.find(c => c.other_user_id === otherId);
+    if (existing) {
+      setActiveConv(existing);
+    } else {
+      // Hämta profiluppgifter direkt om konversationen är helt ny
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, role, avatar_url')
+        .eq('id', otherId)
+        .single();
+      const { data: contact } = await supabase
+        .from('profile_contact_details')
+        .select('full_name')
+        .eq('profile_id', otherId)
+        .single();
+        
+      setActiveConv({
+        other_user_id: otherId,
+        other_name: contact?.full_name || 'Okänd användare',
+        other_role: profile?.role || 'job_seeker',
+        other_avatar: profile?.avatar_url || null,
+        last_message: '',
+        last_time: new Date().toISOString(),
+        unread_count: 0,
+      });
+    }
   };
 
   const handleSend = async () => {
@@ -170,12 +221,20 @@ export default function MessagesPage() {
     setSending(true);
     const content = newMessage.trim();
     setNewMessage('');
-    const { data } = await supabase.from('messages').insert({
+    
+    const { data, error } = await supabase.from('messages').insert({
       sender_id: userId,
       recipient_id: activeConvId,
       content,
     }).select().single();
-    if (data) setMessages(prev => [...prev, data]);
+
+    if (error) {
+      alert(`Kunde inte skicka meddelande: ${error.message}`);
+      console.error("Error sending message:", error);
+    } else if (data) {
+      setMessages(prev => [...prev, data]);
+    }
+    
     await loadConversations(userId);
     setSending(false);
   };

@@ -16,6 +16,8 @@ export interface Profile {
   company_presentation: string | null;
   company_website: string | null;
   company_is_public: boolean;
+  avatar_url?: string | null;
+  certificates?: string[];
   created_at: string;
   updated_at: string;
 }
