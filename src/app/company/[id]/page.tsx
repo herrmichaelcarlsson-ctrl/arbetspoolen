@@ -1,22 +1,54 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import { notFound } from "next/navigation";
-import Link from "next/link";
+'use client';
 
-export const revalidate = 60; // Revalidate at most every minute
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
-export default async function CompanyProfilePage({ params }: { params: { id: string } }) {
-  // Fetch company profile using admin client to bypass RLS if needed, or normal client
-  // Since company info should be public, we can use admin to ensure we get the data
-  // But wait, profiles are public anyway, so we could just use a normal fetch if we had a non-auth server client.
-  // We'll use supabaseAdmin for simplicity.
-  const { data: profile, error } = await supabaseAdmin
-    .from('profiles')
-    .select('company_name, company_logo_url, company_presentation, company_website, role, is_premium, company_is_public')
-    .eq('id', params.id)
-    .single();
+export default function CompanyProfilePage() {
+  const params = useParams();
+  const companyId = params?.id as string;
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (error || !profile || profile.role !== 'employer' || !profile.company_is_public) {
-    notFound();
+  useEffect(() => {
+    const loadCompany = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, role, company_name, company_logo_url, company_presentation, company_website, is_premium, company_is_public')
+        .eq('id', companyId)
+        .single();
+      
+      console.log('Company profile:', { data, error });
+      
+      if (error || !data) {
+        setError('Company not found');
+      } else {
+        setProfile(data);
+      }
+      setLoading(false);
+    };
+    
+    if (companyId) loadCompany();
+  }, [companyId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-3 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !profile || profile.role !== 'employer') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <div className="text-6xl">🏢</div>
+        <h1 className="text-2xl font-bold text-gray-900">Företaget hittades inte</h1>
+        <Link href="/" className="text-blue-600 hover:underline">← Tillbaka</Link>
+      </div>
+    );
   }
 
   return (
