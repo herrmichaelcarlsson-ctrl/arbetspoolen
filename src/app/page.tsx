@@ -125,47 +125,39 @@ export default function Home() {
 
         /* COMPANY LOGOS */
         .hw-logos {
-          max-width: 1200px;
-          margin: 0 auto;
           padding: 0 2rem 2rem;
           text-align: center;
         }
         .hw-logos-label {
           font-size: 11px;
-          font-weight: 500;
-          letter-spacing: 1px;
+          font-weight: 600;
+          letter-spacing: 1.5px;
           text-transform: uppercase;
-          color: #9ca3af;
-          margin-bottom: 1.5rem;
+          color: #94a3b8;
+          margin-bottom: 1.75rem;
         }
         .hw-logos-grid {
           display: flex;
           flex-wrap: wrap;
           justify-content: center;
           align-items: center;
-          gap: 2rem;
-        }
-        @media (min-width: 768px) {
-          .hw-logos-grid { gap: 4rem; }
+          gap: 2.5rem 3rem;
         }
         .hw-logo-link {
+          filter: grayscale(100%) opacity(.55);
+          transition: all .3s;
           display: flex;
-          flex-direction: column;
           align-items: center;
-          justify-content: center;
-          filter: grayscale(100%);
-          opacity: 0.7;
-          transition: all 0.3s ease;
         }
         .hw-logo-link:hover {
-          filter: grayscale(0%);
-          opacity: 1;
+          filter: grayscale(0%) opacity(1);
+          transform: scale(1.05);
         }
-        .hw-logo-img {
-          height: 48px;
+        .hw-logo-link img {
+          height: 44px;
           width: auto;
           object-fit: contain;
-          max-width: 140px;
+          max-width: 130px;
         }
 
         /* TRUST */
@@ -180,24 +172,6 @@ export default function Home() {
           font-size: 30px; color: #1a3a5c; line-height: 1; margin-bottom: 4px;
         }
         .hw-stat span { font-size: 13px; color: #64748b; }
-
-        /* LOGOS */
-        .hw-logos { background: #f8fafc; border-bottom: 1px solid #e8eef4; padding: 2.5rem 2rem; }
-        .hw-logos-inner { max-width: 1100px; margin: 0 auto; }
-        .hw-logos-label {
-          font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
-          color: #94a3b8; text-align: center; margin-bottom: 1.75rem;
-        }
-        .hw-logos-grid {
-          display: flex; flex-wrap: wrap; justify-content: center;
-          align-items: center; gap: 2.5rem 3rem;
-        }
-        .hw-logo-link {
-          filter: grayscale(100%) opacity(.55); transition: all .3s;
-          display: flex; align-items: center;
-        }
-        .hw-logo-link:hover { filter: grayscale(0%) opacity(1); transform: scale(1.05); }
-        .hw-logo-link img { height: 44px; width: auto; object-fit: contain; max-width: 130px; }
 
         /* HOW IT WORKS - 3 cards */
         .hw-section { padding: 5rem 2rem; }
@@ -404,8 +378,6 @@ export default function Home() {
             </div>
           </section>
         )}
-
-        {/* ── TRUST ── */}
 
         {/* ── HOW IT WORKS ── */}
         <section className="hw-section">
