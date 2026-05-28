@@ -97,12 +97,15 @@ export default function EmployerDashboardPage() {
         .welcome-title { font-family: 'DM Serif Display', serif; font-size: clamp(24px, 4vw, 32px); color: #1a3a5c; margin: 0 0 0.5rem; }
         .welcome-sub { font-size: 14px; color: #64748b; margin: 0; }
         .premium-banner { background: linear-gradient(135deg, #f0a020, #e09515); border-radius: 16px; padding: 1.5rem; color: #fff; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .premium-banner h3 { font-size: 16px; margin: 0 0 0.25rem; }
+        .premium-banner h3 { display: flex; align-items: center; gap: 8px; font-size: 16px; margin: 0 0 0.25rem; }
+        .premium-banner h3 svg { width: 18px; height: 18px; }
         .premium-banner p { font-size: 13px; margin: 0; opacity: 0.9; }
-        .premium-btn { background: #fff; color: #f0a020; padding: 10px 20px; border-radius: 99px; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .premium-btn { display: flex; align-items: center; gap: 6px; background: #fff; color: #f0a020; padding: 10px 20px; border-radius: 99px; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s; }
         .premium-btn:hover { background: #fff8f0; }
+        .premium-btn svg { width: 16px; height: 16px; }
         .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; background: #e8eef4; padding: 4px; border-radius: 12px; width: fit-content; }
-        .tab { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer; border: none; background: transparent; transition: all 0.2s; }
+        .tab { display: flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer; border: none; background: transparent; transition: all 0.2s; }
+        .tab svg { width: 16px; height: 16px; }
         .tab:hover { color: #1a3a5c; }
         .tab.active { background: #fff; color: #1a3a5c; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .listings-grid { display: grid; gap: 16px; }
@@ -111,14 +114,18 @@ export default function EmployerDashboardPage() {
         .listing-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
         .listing-title { font-size: 16px; font-weight: 600; color: #1a3a5c; margin: 0; }
         .listing-badges { display: flex; gap: 6px; }
-        .listing-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; }
+        .listing-badge { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 99px; text-transform: uppercase; }
+        .listing-badge svg { width: 12px; height: 12px; }
         .badge-active { background: #ecfdf5; color: #047857; }
         .badge-inactive { background: #fee2e2; color: #b91c1c; }
-        .badge-urgent { background: #dc2626; color: #fff; }
+        .badge-urgent { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
         .listing-meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #64748b; margin-bottom: 12px; }
+        .listing-meta span { display: flex; align-items: center; gap: 4px; }
+        .listing-meta svg { width: 14px; height: 14px; }
         .listing-actions { display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
-        .action-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
-        .action-edit { background: #f1f5f9; color: #1a3a5c; }
+        .action-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+        .action-btn svg { width: 14px; height: 14px; }
+        .action-edit { background: #f1f5f9; color: #1a3a5c; text-decoration: none; }
         .action-edit:hover { background: #e8eef4; }
         .action-delete { background: #fee2e2; color: #b91c1c; }
         .action-delete:hover { background: #fecaca; }
@@ -132,7 +139,7 @@ export default function EmployerDashboardPage() {
         .stat-card { background: #fff; border: 1px solid #e8eef4; border-radius: 12px; padding: 1.25rem; text-align: center; }
         .stat-num { font-family: 'DM Serif Display', serif; font-size: 28px; color: #1a3a5c; margin: 0; }
         .stat-label { font-size: 12px; color: #64748b; margin: 4px 0 0; }
-        @media (max-width: 640px) { .dashboard-container { padding: 1rem; } .premium-banner { flex-direction: column; gap: 1rem; text-align: center; } .tabs { width: 100%; } .tab { flex: 1; text-align: center; padding: 8px 12px; } }
+        @media (max-width: 640px) { .dashboard-container { padding: 1rem; } .premium-banner { flex-direction: column; gap: 1rem; text-align: center; } .tabs { width: 100%; } .tab { flex: 1; justify-content: center; padding: 8px 12px; } }
       `}</style>
 
       <div className="dashboard-page">
@@ -150,10 +157,20 @@ export default function EmployerDashboardPage() {
           {!profile?.is_premium && (
             <div className="premium-banner">
               <div>
-                <h3>⭐ Uppgradera till Premium</h3>
+                <h3>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  Uppgradera till Premium
+                </h3>
                 <p>Skapa obegränsat med annonser och få tillgång till fler kandidater.</p>
               </div>
-              <a href="/employer/premium" className="premium-btn">Uppgradera nu →</a>
+              <a href="/employer/premium" className="premium-btn">
+                Uppgradera nu
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
             </div>
           )}
 
@@ -178,10 +195,16 @@ export default function EmployerDashboardPage() {
 
           <div className="tabs">
             <button className={`tab ${activeTab === 'listings' ? 'active' : ''}`} onClick={() => setActiveTab('listings')}>
-              📋 Mina annonser ({listings.length})
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Mina annonser ({listings.length})
             </button>
             <button className={`tab ${activeTab === 'create' ? 'active' : ''}`} onClick={() => setActiveTab('create')}>
-              ➕ Ny annons
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Ny annons
             </button>
           </div>
 
@@ -199,37 +222,85 @@ export default function EmployerDashboardPage() {
                     <div className="listing-header">
                       <h3 className="listing-title">{listing.title}</h3>
                       <div className="listing-badges">
-                        {listing.is_urgent && <span className="listing-badge badge-urgent">📢 Brådskande</span>}
+                        {listing.is_urgent && (
+                          <span className="listing-badge badge-urgent">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                            </svg>
+                            Brådskande
+                          </span>
+                        )}
                         <span className={`listing-badge ${listing.is_active ? 'badge-active' : 'badge-inactive'}`}>
                           {listing.is_active ? 'Aktiv' : 'Inaktiv'}
                         </span>
                       </div>
                     </div>
                     <div className="listing-meta">
-                      <span>📍 {listing.city}</span>
-                      <span>💼 {listing.trade}</span>
-                      <span>👁️ {listing.views_count} visningar</span>
+                      <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        {listing.city}
+                      </span>
+                      <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        {listing.trade}
+                      </span>
+                      <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        {listing.views_count} visningar
+                      </span>
                     </div>
                     <div className="listing-actions">
                       <button 
                         className="action-btn action-toggle"
                         onClick={() => handleToggleActive(listing)}
                       >
-                        {listing.is_active ? '⏸️ Pausa' : '▶️ Aktivera'}
+                        {listing.is_active ? (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Pausa
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Aktivera
+                          </>
+                        )}
                       </button>
                       <a 
                         href={`/jobs/${listing.id}`} 
                         className="action-btn action-edit"
-                        style={{ textDecoration: 'none' }}
                       >
-                        👁️ Visa
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Visa
                       </a>
                       <button 
                         className="action-btn action-delete"
                         onClick={() => handleDelete(listing.id)}
                         disabled={deletingId === listing.id}
                       >
-                        {deletingId === listing.id ? '⏳...' : '🗑️ Ta bort'}
+                        {deletingId === listing.id ? 'Laddar...' : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Ta bort
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
