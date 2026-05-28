@@ -7,6 +7,7 @@ import { JobListingWithEmployer } from "@/types";
 
 export default function Home() {
   const [recentJobs, setRecentJobs] = useState<JobListingWithEmployer[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchRecentJobs = async () => {
@@ -27,7 +28,21 @@ export default function Home() {
         setRecentJobs(transformed);
       }
     };
+
+    const fetchCompanies = async () => {
+      const { data } = await supabase
+        .from('employer_company_details')
+        .select('id, company_name, company_logo_url')
+        .not('company_logo_url', 'is', null)
+        .limit(12);
+      
+      if (data) {
+        setCompanies(data);
+      }
+    };
+
     fetchRecentJobs();
+    fetchCompanies();
   }, []);
   return (
     <>
@@ -656,6 +671,53 @@ export default function Home() {
           .job-listings-header { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 0 1rem; }
           .rb-footer { flex-direction: column; gap: 8px; text-align: center; }
         }
+
+        /* COMPANY LOGOS SECTION */
+        .company-logos-section {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 3rem 2rem;
+          text-align: center;
+        }
+        .company-logos-label {
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          color: #9ca3af;
+          margin-bottom: 2rem;
+        }
+        .company-logos-grid {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
+          gap: 2rem;
+        }
+        .company-logo-link {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          filter: grayscale(100%);
+          opacity: 0.7;
+          transition: all 0.3s ease;
+        }
+        .company-logo-link:hover {
+          filter: grayscale(0%);
+          opacity: 1;
+        }
+        .company-logo-img {
+          height: 48px;
+          width: auto;
+          object-fit: contain;
+          max-width: 140px;
+        }
+
+        @media (max-width: 768px) {
+          .company-logos-section { padding: 2rem 1rem; }
+          .company-logos-grid { gap: 1.5rem; }
+        }
       `}</style>
 
       <div className="rb-wrap">
@@ -674,6 +736,28 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* COMPANY LOGOS */}
+        {companies.length > 0 && (
+          <section className="company-logos-section">
+            <p className="company-logos-label">Företag som letar talang på plattformen</p>
+            <div className="company-logos-grid">
+              {companies.map((company) => (
+                <a 
+                  key={company.id} 
+                  href={`/company/${company.id}`} 
+                  className="company-logo-link"
+                >
+                  <img 
+                    src={company.company_logo_url} 
+                    alt={company.company_name || 'Company logo'} 
+                    className="company-logo-img"
+                  />
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* TRUST / STATS */}
         <section className="rb-trust">
