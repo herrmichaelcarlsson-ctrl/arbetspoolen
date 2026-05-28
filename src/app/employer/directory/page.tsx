@@ -5,8 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { CandidateProfile, Profile } from '@/types';
-
 import { FLAT_TRADES as SWEDISH_TRADES, SWEDISH_CITIES } from '@/lib/constants';
+import { SaveButton } from '@/components/SaveButton';
+import { MessageButton } from '@/components/MessageButton';
+
+type CandidateWithAvatar = CandidateProfile & { avatar_url?: string | null };
 
 function EmployerDirectoryContent() {
   const router = useRouter();
@@ -433,7 +436,7 @@ function EmployerDirectoryContent() {
               </div>
             ) : (
               <div className="space-y-4">
-                {candidates.map((candidate) => {
+                {candidates.map((candidate: CandidateWithAvatar) => {
                   const hasDetails = candidate.profile_contact_details !== null && typeof candidate.profile_contact_details === 'object';
                   const details = candidate.profile_contact_details;
                   
@@ -449,8 +452,8 @@ function EmployerDirectoryContent() {
                     <div 
                       key={candidate.id} 
                       className={`candidate-card ${hasDetails ? 'candidate-premium' : ''}`}
-                      onClick={() => router.push(`/employer/candidate/${candidate.id}`)}
                       style={{ cursor: 'pointer' }}
+                      onClick={() => router.push(`/candidate/${candidate.id}`)}
                     >
                       <div className="card-header">
                         <div className="card-profile-info">
@@ -529,6 +532,21 @@ function EmployerDirectoryContent() {
                               </a>
                             </div>
                           )}
+                          {/* Action buttons */}
+                          <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid #e0eaf4', alignItems: 'center' }}>
+                            {currentUser && (
+                              <MessageButton
+                                recipientId={candidate.id}
+                                recipientName={details.full_name || 'Kandidat'}
+                              />
+                            )}
+                            {currentUser && (
+                              <SaveButton
+                                candidateId={candidate.id}
+                                employerId={currentUser.id}
+                              />
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <div className="locked-details-container">

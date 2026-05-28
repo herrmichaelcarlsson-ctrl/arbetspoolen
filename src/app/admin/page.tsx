@@ -137,6 +137,35 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Admin Actions */}
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-100 mb-8">
+        <div className="px-4 py-5 sm:px-6">
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Admin-verktyg</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a 
+              href="/admin/verification" 
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition flex items-center gap-3"
+            >
+              <span className="text-2xl">✅</span>
+              <div>
+                <p className="font-medium text-gray-900">Verifieringsförfrågningar</p>
+                <p className="text-sm text-gray-500">Granska inskickade dokument</p>
+              </div>
+            </a>
+            <a 
+              href="/admin/boosts" 
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition flex items-center gap-3"
+            >
+              <span className="text-2xl">⚡</span>
+              <div>
+                <p className="font-medium text-gray-900">Aktiva boosts</p>
+                <p className="text-sm text-gray-500">Hantera framhävda profiler</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* Users Table */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-100">
         <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
