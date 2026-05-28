@@ -60,7 +60,7 @@ export default function AdminVerificationPage() {
       // Load verification requests
       let query = supabase
         .from('verification_requests')
-        .select('*, profile:profiles(*, profile_contact_details.contact_email)')
+        .select('*')
         .order('submitted_at', { ascending: false });
 
       if (filter !== 'all') {
@@ -70,7 +70,23 @@ export default function AdminVerificationPage() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setRequests(data || []);
+      
+      // Load profile data separately
+      const profileIds = (data || []).map((r: any) => r.profile_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, trade, city, experience_years')
+        .in('id', profileIds);
+      
+      const profileMap: Record<string, any> = {};
+      (profiles || []).forEach((p: any) => { profileMap[p.id] = p; });
+      
+      const requestsWithProfiles = (data || []).map((r: any) => ({
+        ...r,
+        profile: profileMap[r.profile_id] || {}
+      }));
+      
+      setRequests(requestsWithProfiles);
     } catch (err) {
       console.error('Load error:', err);
     } finally {
@@ -202,7 +218,7 @@ export default function AdminVerificationPage() {
                     <div className="text-sm text-slate-500 space-y-1">
                       <p>📍 {req.profile?.city || 'Stad ej angiven'}</p>
                       <p>💼 {req.profile?.experience_years || 0} års erfarenhet</p>
-                      <p>📧 {(req as any).profile?.profile_contact_details?.contact_email || 'E-post saknas'}</p>
+                      <p>📧 {(req as any).profile?.email || 'E-post saknas'}</p>
                       <p>📎 {getDocTypeLabel(req.document_type)}</p>
                       <p>📅 Inlämnad: {new Date(req.submitted_at).toLocaleDateString('sv-SE')}</p>
                       {req.stripe_payment_id && (
