@@ -36,49 +36,75 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Handle the target checkout.session.completed event
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const userId = session.client_reference_id;
+    const product = session.metadata?.product;
 
     if (!userId) {
-      console.error('No client_reference_id found in the checkout session:', session.id);
+      console.error('No client_reference_id found:', session.id);
       return NextResponse.json({ error: 'Missing client_reference_id' }, { status: 400 });
     }
 
-    console.log(`Processing successful checkout session ${session.id} for user ${userId}`);
+    console.log(`Processing checkout for user ${userId}, product: ${product}`);
 
-    // Create Supabase Admin client to bypass RLS and update profiles
     const supabaseAdminUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseAdminUrl || !supabaseServiceKey) {
-      console.error('Supabase administrative keys are missing in the server environment (NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).');
       return NextResponse.json({ error: 'Supabase admin keys not configured' }, { status: 500 });
     }
 
     const supabaseAdmin = createClient(supabaseAdminUrl, supabaseServiceKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
+      auth: { persistSession: false, autoRefreshToken: false }
     });
 
-    // Update the is_premium status of the employer profile
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .update({ is_premium: true })
-      .eq('id', userId)
-      .select();
+    switch (product) {
+      case 'employer_monthly':
+        await supabaseAdmin.from('profiles')
+          .update({ is_premium: true, stripe_customer_id: session.customer })
+          .eq('id', userId);
+        break;
 
-    if (error) {
-      console.error(`Failed to update is_premium for user ${userId} in profiles table:`, error);
-      return NextResponse.json({ error: `Supabase update error: ${error.message}` }, { status: 500 });
+      case 'candidate_boost':
+        const oneWeekFromNow = new Date();
+        oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+        await supabaseAdmin.from('profiles')
+          .update({ profile_boost_ends_at: oneWeekFromNow.toISOString() })
+          .eq('id', userId);
+        break;
+
+      case 'candidate_boost_month':
+        const oneMonthFromNow = new Date();
+        oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+        await supabaseAdmin.from('profiles')
+          .update({ profile_boost_ends_at: oneMonthFromNow.toISOString() })
+          .eq('id', userId);
+        break;
+
+      case 'verification':
+        await supabaseAdmin.from('verification_requests').upsert({
+          profile_id: userId,
+          status: 'pending',
+          stripe_payment_id: session.id
+        }, { onConflict: 'profile_id' });
+        break;
+
+      case 'recruitment_package':
+        await supabaseAdmin.from('profiles')
+          .update({ is_premium_locked: true })
+          .eq('id', userId);
+        break;
+
+      default:
+        await supabaseAdmin.from('profiles')
+          .update({ is_premium: true })
+          .eq('id', userId);
     }
 
-    console.log(`Successfully updated profile premium status for user ${userId}:`, data);
+    console.log(`Successfully processed ${product || 'default'} for user ${userId}`);
   } else {
-    console.log(`Unhandled Stripe Webhook event received: ${event.type}`);
+    console.log(`Unhandled Stripe event: ${event.type}`);
   }
 
   return NextResponse.json({ received: true });
