@@ -38,9 +38,15 @@ export default function ImageCropperModal({
   }, [imageSrc, isOpen]);
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.log('Image loaded successfully');
     const img = e.currentTarget;
     const naturalW = img.naturalWidth;
     const naturalH = img.naturalHeight;
+
+    if (naturalW === 0 || naturalH === 0) {
+      console.error('Image has zero dimensions');
+      return;
+    }
 
     let fitWidth = VIEWPORT_SIZE;
     let fitHeight = VIEWPORT_SIZE;
@@ -61,6 +67,10 @@ export default function ImageCropperModal({
 
     setDimensions({ fitWidth, fitHeight, startX, startY });
     setImageLoaded(true);
+  };
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.error('Image failed to load:', imageSrc);
   };
 
   // Helper to limit offset so image always covers the circle/square viewport
@@ -125,10 +135,29 @@ export default function ImageCropperModal({
   };
 
   const handleSave = () => {
+    console.log('handleSave called, imageLoaded:', imageLoaded);
+    
+    // Wait a bit for image to fully load if it just triggered onLoad
+    if (!imgRef.current || !imageLoaded) {
+      // Try one more time with a small delay
+      setTimeout(() => {
+        if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+          performCrop();
+        } else {
+          alert("Bilden har inte laddats klart än. Vänligen vänta tills bilden syns i cirkeln.");
+        }
+      }, 100);
+      return;
+    }
+    
+    performCrop();
+  };
+  
+  const performCrop = () => {
     try {
       const img = imgRef.current;
-      if (!img || !imageLoaded) {
-        alert("Bilden har inte laddats klart än. Vänligen vänta.");
+      if (!img) {
+        alert("Bilden kunde inte hittas. Försök ladda upp bilden igen.");
         return;
       }
 
@@ -142,7 +171,7 @@ export default function ImageCropperModal({
         return;
       }
 
-      // Fill white background in case of transparent png
+      // Fill white background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, TARGET_SIZE, TARGET_SIZE);
 
@@ -155,13 +184,12 @@ export default function ImageCropperModal({
       const drawW = renderedW * scaleRatio;
       const drawH = renderedH * scaleRatio;
 
-      // Draw the image scaled and positioned perfectly
       ctx.drawImage(img, drawX, drawY, drawW, drawH);
 
-      // Export as high-quality JPEG
       canvas.toBlob(
         (blob) => {
           if (blob) {
+            console.log('Blob created, size:', blob.size);
             onCropComplete(blob);
             onClose();
           } else {
@@ -172,6 +200,7 @@ export default function ImageCropperModal({
         0.92
       );
     } catch (err: any) {
+      console.error('Crop error:', err);
       alert(`Ett fel uppstod vid beskärningen: ${err.message}`);
     }
   };
@@ -220,6 +249,7 @@ export default function ImageCropperModal({
               alt="Crop Source"
               crossOrigin={isDataUrl ? undefined : "anonymous"}
               onLoad={handleImageLoad}
+              onError={handleImageError}
               className="max-w-none origin-center pointer-events-none select-none"
               style={{
                 width: dimensions.fitWidth,
@@ -228,6 +258,13 @@ export default function ImageCropperModal({
                 transition: isDragging ? 'none' : 'transform 0.1s ease-out'
               }}
             />
+            
+            {/* Loading indicator */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+                <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+              </div>
+            )}
           </div>
         </div>
 

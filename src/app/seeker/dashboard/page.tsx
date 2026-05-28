@@ -155,8 +155,15 @@ export default function SeekerDashboard() {
     
     const reader = new FileReader();
     reader.onload = () => {
+      // First set the image source
       setSelectedImageSrc(reader.result as string);
-      setIsCropperOpen(true);
+      // Then open modal on next render
+      setTimeout(() => {
+        setIsCropperOpen(true);
+      }, 50);
+    };
+    reader.onerror = () => {
+      setErrorMessage('Kunde inte läsa bilden.');
     };
     reader.readAsDataURL(file);
   };
