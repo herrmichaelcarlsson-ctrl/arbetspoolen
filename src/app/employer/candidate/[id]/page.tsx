@@ -103,9 +103,8 @@ export default function CandidateProfilePage({ params }: PageProps) {
     inte_tillganglig: 'Inte tillgänglig just nu',
   };
 
-  const activeCertificates = Array.isArray(candidate.certificates) 
-    ? candidate.certificates.filter((c: string) => c?.trim()) 
-    : [];
+  const activeCertificates = (Array.isArray(candidate.certificates) ? candidate.certificates : [])
+    .filter((c: string) => typeof c === 'string' && c.trim());
 
   // Generate avatar color
   const indexColors = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981'];
