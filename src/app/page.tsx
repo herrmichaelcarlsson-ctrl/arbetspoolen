@@ -37,10 +37,10 @@ export default function Home() {
 
   const TRADES = [
     { icon: '🔨', label: 'Snickare', count: 340 },
-    { icon: '🔧', label: 'Elektriker', count: 280 },
-    { icon: '👨‍🍳', label: 'Kockar', count: 420 },
-    { icon: '💼', label: 'Bartenders', count: 160 },
-    { icon: '✨', label: 'Städare', count: 310 },
+    { icon: '⚡', label: 'Elektriker', count: 280 },
+    { icon: '🍳', label: 'Kockar', count: 420 },
+    { icon: '🍺', label: 'Bartenders', count: 160 },
+    { icon: '🧹', label: 'Städare', count: 310 },
     { icon: '🍽️', label: 'Servitrörer', count: 260 },
   ];
 
