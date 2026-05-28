@@ -51,9 +51,7 @@ function JobsContent() {
           *,
           employer:profiles(id, trade, city),
           employer_details:employer_company_details(company_name, company_logo_url)
-        `, { count: 'exact' })
-        .eq('is_active', true)
-        .or('expires_at.is.null,expires_at.gt.now');
+        `, { count: 'exact' });
 
       if (trade) query = query.eq('trade', trade);
       if (city) query = query.eq('city', city);

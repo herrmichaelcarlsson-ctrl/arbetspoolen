@@ -31,6 +31,7 @@ export default function JobDetailPage() {
   useEffect(() => {
     const fetchListing = async () => {
       try {
+        // First try without is_active filter to see if record exists
         const { data, error } = await supabase
           .from('job_listings')
           .select(`
@@ -39,13 +40,16 @@ export default function JobDetailPage() {
             employer_details:employer_company_details(company_name, company_logo_url, company_description, company_website)
           `)
           .eq('id', params.id)
-          .eq('is_active', true)
           .single();
 
-        if (error) throw error;
+        if (error || !data) {
+          setError('Annonsen hittades inte');
+          setLoading(false);
+          return;
+        }
         
-        // Increment view count
-        await supabase.rpc('increment_job_view', { listing_id: params.id });
+        // Increment view count (ignore if fails)
+        try { await supabase.rpc('increment_job_view', { listing_id: params.id }); } catch {}
 
         setListing({
           ...data,
