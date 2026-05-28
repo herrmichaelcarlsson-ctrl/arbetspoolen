@@ -501,7 +501,7 @@ function EmployerDirectoryContent() {
                       key={candidate.id} 
                       className={`candidate-card ${hasDetails ? 'candidate-premium' : ''}`}
                       style={{ cursor: 'pointer' }}
-                      onClick={() => router.push(`/candidate/${candidate.id}`)}
+                      onClick={() => router.push(`/employer/candidate/${candidate.id}`)}
                     >
                       <div className="card-header">
                         <div className="card-profile-info">
