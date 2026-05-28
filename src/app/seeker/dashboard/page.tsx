@@ -37,9 +37,6 @@ export default function SeekerDashboard() {
   const [phone, setPhone] = useState('');
   const [isPremium, setIsPremium] = useState(false);
   const [isPremiumLocked, setIsPremiumLocked] = useState(true);
-  const [profileBoostEndsAt, setProfileBoostEndsAt] = useState<string | null>(null);
-  const [hasVerifiedBadge, setHasVerifiedBadge] = useState(false);
-  const [weeklyViews, setWeeklyViews] = useState(0);
 
   // Avatar state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -93,23 +90,25 @@ export default function SeekerDashboard() {
           setAvailability(profile.availability || 'omgaende');
           setBio(profile.bio || '');
           // Ladda in sparade certifikat (om de finns, annars en tom array)
-          const certs = profile.certificates;
-          setCertificates(Array.isArray(certs) ? certs : (certs ? [certs] : []));
+          const rawCerts = profile.certificates;
+          let parsedCerts: string[] = [];
+          if (Array.isArray(rawCerts)) {
+            // Unwrap any nested JSON-encoded strings
+            parsedCerts = rawCerts.map((c: any) => {
+              let val = c;
+              while (typeof val === 'string' && (val.startsWith('[') || val.startsWith('"'))) {
+                try { val = JSON.parse(val); } catch { break; }
+              }
+              return Array.isArray(val) ? val[0] : String(val);
+            }).filter((c: string) => c && c.trim());
+          } else if (typeof rawCerts === 'string') {
+            try { parsedCerts = JSON.parse(rawCerts); } catch { parsedCerts = [rawCerts]; }
+          }
+          setCertificates(parsedCerts);
           setIsPremium(profile.is_premium || false);
           setAvatarUrl(profile.avatar_url || null);
           setIsPremiumLocked(profile.is_premium_locked ?? true);
-          setProfileBoostEndsAt(profile.profile_boost_ends_at || null);
-          setHasVerifiedBadge(profile.has_verified_badge || false);
         }
-
-        // Load weekly views stats
-        try {
-          const res = await fetch('/api/profile/views/stats', { headers: { 'x-user-id': user.id } });
-          if (res.ok) {
-            const stats = await res.json();
-            setWeeklyViews(stats.weekly_count || 0);
-          }
-        } catch (e) { /* stats optional */ }
 
         if (contact) {
           setFullName(contact.full_name || '');
@@ -249,40 +248,6 @@ export default function SeekerDashboard() {
       router.push('/login');
     } catch (err) {
       console.error('Logout error:', err);
-    }
-  };
-
-  // Purchase profile boost
-  const purchaseBoost = async (duration: 'week' | 'month') => {
-    if (!userId) return;
-    try {
-      const res = await fetch('/api/stripe/premium', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
-        body: JSON.stringify({ product: duration === 'week' ? 'candidate_boost' : 'candidate_boost_month' })
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch (err) {
-      console.error('Purchase error:', err);
-      setErrorMessage('Kunde inte starta köp. Försök igen.');
-    }
-  };
-
-  // Request verification
-  const requestVerification = async () => {
-    if (!userId) return;
-    try {
-      const res = await fetch('/api/stripe/premium', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
-        body: JSON.stringify({ product: 'verification' })
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch (err) {
-      console.error('Verification error:', err);
-      setErrorMessage('Kunde inte starta verifiering. Försök igen.');
     }
   };
 
@@ -627,15 +592,13 @@ export default function SeekerDashboard() {
           {/* ============================================================== */}
           {/* LIVE PREVIEW (RIGHT 5 COLUMNS)                                 */}
           {/* ============================================================== */}
-          <div className="lg:col-span-5 space-y-6">
-            
-            {/* Control bar for live preview */}
+          <div className="lg:col-span-5 space-y-4">
+
+            {/* Preview mode toggle */}
             <div className="flex items-center justify-between bg-white border border-[var(--border)] rounded-xl p-3.5">
               <span className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">
                 Förhandsgranskning
               </span>
-              
-              {/* Preview Mode Selector tabs */}
               <div className="flex bg-[var(--surface)] p-1 rounded-lg border border-[var(--border)]">
                 <button
                   onClick={() => setPreviewMode('compact')}
@@ -660,124 +623,70 @@ export default function SeekerDashboard() {
               </div>
             </div>
 
-            {/* PREVIEW CONTAINER */}
+            {/* PREVIEW CARD */}
             <div className="relative group transition-all duration-300">
-              
-              {/* Aurora background outline on hover */}
-              <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-tr from-[#1a5fa8] to-[#7ecff5] opacity-10 blur-[10px] group-hover:opacity-20 group-hover:blur-[12px] transition-all duration-500 pointer-events-none -z-10" />
+              <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-tr from-[#1a5fa8] to-[#7ecff5] opacity-10 blur-[10px] group-hover:opacity-20 transition-all duration-500 pointer-events-none -z-10" />
 
               {previewMode === 'compact' ? (
-                
-                /* COMPACT CARD VIEW */
-                <div className="bg-white border border-[var(--border)] rounded-[20px] p-6 shadow-sm flex flex-col justify-between min-h-[420px] transition-all duration-300">
-                  
-                  {/* Card Header */}
+                <div className="bg-white border border-[var(--border)] rounded-[20px] p-6 shadow-sm flex flex-col justify-between min-h-[400px]">
                   <div>
                     <div className="flex items-start justify-between">
-                      {/* Avatar */}
                       <div className="w-14 h-14 rounded-2xl border border-[var(--border-strong)] overflow-hidden flex items-center justify-center bg-[var(--surface)]">
                         {(avatarPreview || avatarUrl)
                           ? <img src={avatarPreview || avatarUrl!} alt="Avatar" style={{width:'100%',height:'100%',objectFit:'cover'}} />
                           : <span className="text-[var(--brand)] font-black text-xl">{getInitials(fullName)}</span>
                         }
                       </div>
-
-                      {/* Premium indicator badge */}
                       {isPremium ? (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
-                          ✨ Premium
-                        </span>
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">✨ Premium</span>
                       ) : (
-                        <span className="text-[10px] font-medium text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] px-2 py-0.5 rounded flex items-center gap-1">
-                          🔒 Låst
-                        </span>
+                        <span className="text-[10px] font-medium text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] px-2 py-0.5 rounded flex items-center gap-1">🔒 Låst</span>
                       )}
                     </div>
-
-                    {/* Basic Info - FIXAT FÄRGER HÄR FÖR TYDLIGHET */}
                     <div className="mt-4">
-                      <h3 className="text-lg font-bold text-[var(--brand-navy)] tracking-tight leading-snug">
-                        {fullName || 'Ditt Namn'}
-                      </h3>
+                      <h3 className="text-lg font-bold text-[var(--brand-navy)] tracking-tight">{fullName || 'Ditt Namn'}</h3>
                       <div className="flex flex-wrap gap-2 items-center mt-1">
-                        <span className="text-xs text-[var(--brand)] font-bold uppercase tracking-wider">
-                          {trade || 'Yrkesroll saknas'}
-                        </span>
+                        <span className="text-xs text-[var(--brand)] font-bold uppercase tracking-wider">{trade || 'Yrkesroll saknas'}</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-[var(--border-strong)]" />
-                        <span className="text-xs text-[var(--muted)] font-medium flex items-center gap-0.5">
-                          📍 {city || 'Ort ej vald'}
-                        </span>
+                        <span className="text-xs text-[var(--muted)] font-medium">📍 {city || 'Ort ej vald'}</span>
                       </div>
                     </div>
-
-                    {/* Stats pills */}
                     <div className="grid grid-cols-2 gap-2.5 mt-5">
                       <div className="bg-[var(--surface)] border border-[var(--border)] p-2 rounded-xl text-center">
                         <div className="text-[9px] text-[var(--muted)] uppercase tracking-widest font-semibold">Erfarenhet</div>
-                        <div className="text-xs font-bold text-[var(--brand-navy)] mt-0.5">{experienceYears} {experienceYears === 1 ? 'år' : 'år'}</div>
+                        <div className="text-xs font-bold text-[var(--brand-navy)] mt-0.5">{experienceYears} år</div>
                       </div>
                       <div className={`border p-2 rounded-xl text-center ${availabilityInfo.bgClass}`}>
                         <div className="text-[9px] text-[var(--muted)] uppercase tracking-widest font-semibold">Start</div>
-                        <div className={`text-xs font-bold mt-0.5 ${availabilityInfo.textClass}`}>
-                          {availabilityInfo.label.replace('Tillgänglig ', '')}
-                        </div>
+                        <div className={`text-xs font-bold mt-0.5 ${availabilityInfo.textClass}`}>{availabilityInfo.label.replace('Tillgänglig ', '')}</div>
                       </div>
                     </div>
-
-                    {/* Visar certifikat om de finns i kompaktvyn */}
                     {activeCertificates.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-1.5">
                         {activeCertificates.slice(0, 3).map((cert, idx) => (
-                          <span key={idx} className="text-[9px] font-semibold text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] px-2 py-1 rounded-md">
-                            {cert}
-                          </span>
+                          <span key={idx} className="text-[9px] font-semibold text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] px-2 py-1 rounded-md">{cert}</span>
                         ))}
                         {activeCertificates.length > 3 && (
-                          <span className="text-[9px] font-semibold text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] px-2 py-1 rounded-md">
-                            +{activeCertificates.length - 3} fler
-                          </span>
+                          <span className="text-[9px] font-semibold text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] px-2 py-1 rounded-md">+{activeCertificates.length - 3} fler</span>
                         )}
                       </div>
                     )}
-
-                    {/* Biography excerpt */}
                     <div className="mt-5">
                       <div className="text-[10px] text-[var(--muted)] uppercase tracking-widest font-semibold mb-1">Beskrivning</div>
-                      <p className="text-xs text-[var(--brand-navy)] leading-relaxed font-medium line-clamp-3 italic opacity-90">
-                        &rdquo;{bio || 'Här kommer din korta biografi och beskrivning att visas. Fyll i rutan i redigeraren för att presentera dig själv.'}&rdquo;
+                      <p className="text-xs text-[var(--brand-navy)] leading-relaxed italic opacity-90 line-clamp-3">
+                        &rdquo;{bio || 'Fyll i din biografi i formuläret till vänster.'}&rdquo;
                       </p>
                     </div>
                   </div>
-
-                  {/* Contact Preview (Mock representation of employer click) */}
                   <div className="border-t border-[var(--border)] pt-4 mt-6">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[var(--muted)] text-[10px] uppercase font-bold tracking-wider">Kontaktinfo</span>
-                      <span className="text-[var(--brand)] font-semibold cursor-pointer hover:underline text-[10px]">
-                        Visa kontaktuppgifter
-                      </span>
-                    </div>
-
-                    {/* Simulating hidden contact details unless Premium / Unlocked */}
-                    <div className="mt-2 bg-[#1a3a5c] border border-[#134a85] rounded-xl p-3 text-xs space-y-1.5 font-light text-slate-300 shadow-inner">
-                      <div className="flex justify-between">
-                        <span>E-post:</span>
-                        <span className="font-medium text-white">{contactEmail || 'namn@domän.se'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Telefon:</span>
-                        <span className="font-medium text-white">{phone || 'Ej angivet'}</span>
-                      </div>
+                    <div className="bg-[#1a3a5c] rounded-xl p-3 text-xs space-y-1.5 font-light text-slate-300">
+                      <div className="flex justify-between"><span>E-post:</span><span className="font-medium text-white">{contactEmail || 'namn@domän.se'}</span></div>
+                      <div className="flex justify-between"><span>Telefon:</span><span className="font-medium text-white">{phone || 'Ej angivet'}</span></div>
                     </div>
                   </div>
-
                 </div>
               ) : (
-                
-                /* DETAILED VIEW (FULL SHEET) - FIXAT FÄRGER HÄR FÖR TYDLIGHET */
-                <div className="bg-white border border-[var(--border)] rounded-[20px] p-6 shadow-sm space-y-6 min-h-[420px] transition-all duration-300">
-                  
-                  {/* Top Profile Header */}
+                <div className="bg-white border border-[var(--border)] rounded-[20px] p-6 shadow-sm space-y-5">
                   <div className="flex flex-col items-center text-center pb-5 border-b border-[var(--border)]">
                     <div className="rounded-full border border-[var(--border-strong)] overflow-hidden flex items-center justify-center bg-[var(--surface)] shadow-md mb-3" style={{width:72,height:72}}>
                       {(avatarPreview || avatarUrl)
@@ -785,264 +694,168 @@ export default function SeekerDashboard() {
                         : <span className="text-[var(--brand)] font-extrabold text-2xl">{getInitials(fullName)}</span>
                       }
                     </div>
-                    
                     <h3 className="text-xl font-bold text-[var(--brand-navy)]">{fullName || 'Ditt Namn'}</h3>
                     <p className="text-xs text-[var(--brand)] font-bold uppercase tracking-widest mt-1">{trade || 'Yrke ej satt'}</p>
-                    <p className="text-[11px] text-[var(--muted)] font-medium mt-1 flex items-center gap-1">📍 {city || 'Ort ej vald'}</p>
+                    <p className="text-[11px] text-[var(--muted)] mt-1">📍 {city || 'Ort ej vald'}</p>
                   </div>
-
-                  {/* Core Professional Specifications */}
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">Yrkes-specifikationer</h4>
-                    
-                    <div className="space-y-2.5">
-                      <div className="flex justify-between items-center text-xs py-1.5 border-b border-[var(--border)]">
-                        <span className="text-[var(--muted)] font-medium">Erfarenhet totalt:</span>
-                        <span className="font-bold text-[var(--brand-navy)]">{experienceYears} år</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center text-xs py-1.5 border-b border-[var(--border)]">
-                        <span className="text-[var(--muted)] font-medium">Status för tillträde:</span>
-                        <span className={`font-bold ${availabilityInfo.textClass}`}>{availabilityInfo.label}</span>
-                      </div>
-
-                      <div className="flex justify-between items-center text-xs py-1.5 border-b border-[var(--border)]">
-                        <span className="text-[var(--muted)] font-medium">Ort:</span>
-                        <span className="font-bold text-[var(--brand-navy)]">{city || 'Ej angivet'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Certifikat sektion i detaljerad vy */}
-                  {activeCertificates.length > 0 && (
-                     <div className="space-y-3 pt-2">
-                       <h4 className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">Certifikat & Licenser</h4>
-                       <div className="flex flex-wrap gap-2">
-                         {activeCertificates.map((cert, idx) => (
-                           <div key={idx} className="flex items-center gap-1.5 bg-[var(--surface)] border border-[var(--border-strong)] text-[var(--brand-navy)] text-xs font-semibold px-3 py-1.5 rounded-lg">
-                             <span className="text-[var(--brand)]">✓</span> {cert}
-                           </div>
-                         ))}
-                       </div>
-                     </div>
-                  )}
-
-                  {/* Expanded Bio */}
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">Biografi</h4>
-                    <p className="text-sm text-[var(--brand-navy)] leading-relaxed font-medium bg-[var(--surface)] border border-[var(--border)] p-4 rounded-xl whitespace-pre-wrap italic">
-                      {bio || 'Ingen biografi skriven ännu. Dela dina främsta färdigheter här...'}
-                    </p>
-                  </div>
-
-                  {/* Locked contact overlay representation */}
-                  <div className="p-4 bg-[#1a3a5c] rounded-xl border border-[#134a85] space-y-3 shadow-inner">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-300 font-bold text-[10px] uppercase tracking-wider">Verifierad kontakt</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-medium">Matchad</span>
-                    </div>
-
-                    <div className="space-y-1.5 text-xs text-slate-300 font-light">
-                      <div className="flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        <span>{contactEmail || 'epost@domän.se'}</span>
+                    {[
+                      { label: 'Erfarenhet', value: `${experienceYears} år` },
+                      { label: 'Tillgänglighet', value: availabilityInfo.label },
+                      { label: 'Ort', value: city || 'Ej angivet' },
+                    ].map(row => (
+                      <div key={row.label} className="flex justify-between items-center text-xs py-1.5 border-b border-[var(--border)]">
+                        <span className="text-[var(--muted)]">{row.label}</span>
+                        <span className="font-bold text-[var(--brand-navy)]">{row.value}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        <span>{phone || '07X-XXX XX XX'}</span>
+                    ))}
+                  </div>
+                  {activeCertificates.length > 0 && (
+                    <div>
+                      <div className="text-[10px] text-[var(--muted)] uppercase tracking-widest font-semibold mb-2">Certifikat</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {activeCertificates.map((cert, idx) => (
+                          <span key={idx} className="text-[10px] font-semibold text-[var(--brand-navy)] bg-[var(--surface)] border border-[var(--border-strong)] px-2.5 py-1 rounded-lg flex items-center gap-1"><span className="text-[var(--brand)]">✓</span> {cert}</span>
+                        ))}
                       </div>
                     </div>
+                  )}
+                  {bio && (
+                    <div>
+                      <div className="text-[10px] text-[var(--muted)] uppercase tracking-widest font-semibold mb-2">Biografi</div>
+                      <p className="text-sm text-[var(--brand-navy)] leading-relaxed bg-[var(--surface)] border border-[var(--border)] p-3 rounded-xl italic">{bio}</p>
+                    </div>
+                  )}
+                  <div className="bg-[#1a3a5c] rounded-xl p-3 space-y-1.5 text-xs text-slate-300">
+                    <div className="flex justify-between"><span>E-post:</span><span className="text-white font-medium">{contactEmail || '–'}</span></div>
+                    <div className="flex justify-between"><span>Telefon:</span><span className="text-white font-medium">{phone || '–'}</span></div>
                   </div>
-
                 </div>
               )}
-
             </div>
 
-          </div>
-
-          {/* ============================================================== */}
-          {/* PREMIUM FEATURES & TOOLS (Below Preview)                        */}
-          {/* ============================================================== */}
-          <div className="lg:col-span-5 space-y-4">
-            
-            {/* Section Header */}
-            <div className="flex items-center gap-2 px-1">
-              <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-              </svg>
-              <span className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">Verktyg & Premium</span>
+            {/* === PROFILSTYRKA === */}
+            <div className="bg-white border border-[var(--border)] rounded-[20px] p-5">
+              <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-3">Profilstyrka</div>
+              {(() => {
+                const fields = [
+                  { label: 'Namn', done: !!fullName.trim() },
+                  { label: 'Yrke', done: !!trade.trim() },
+                  { label: 'Stad', done: !!city.trim() },
+                  { label: 'Telefon', done: !!phone.trim() },
+                  { label: 'Bio', done: bio.trim().length >= 30 },
+                  { label: 'Profilbild', done: !!(avatarUrl || avatarPreview) },
+                  { label: 'Erfarenhet', done: experienceYears > 0 },
+                  { label: 'Certifikat', done: certificates.filter(c => c.trim()).length > 0 },
+                ];
+                const pct = Math.round((fields.filter(f => f.done).length / fields.length) * 100);
+                const missing = fields.find(f => !f.done);
+                const color = pct >= 80 ? '#16a34a' : pct >= 50 ? '#1a5fa8' : '#f0a020';
+                return (
+                  <>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-bold text-[var(--brand-navy)]">{pct}% komplett</span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: pct >= 80 ? '#dcfce7' : pct >= 50 ? '#e6f1fb' : '#fff4e0', color }}>{pct >= 80 ? 'Utmärkt' : pct >= 50 ? 'Bra' : 'Påbörjad'}</span>
+                    </div>
+                    <div className="w-full h-2 bg-[var(--border)] rounded-full overflow-hidden mb-3">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}aa)` }} />
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5 mb-3">
+                      {fields.map(f => (
+                        <div key={f.label} className={`text-center text-[10px] py-1 rounded-lg border ${f.done ? 'bg-[#e6f1fb] border-[#b8d0e8] text-[var(--brand)] font-semibold' : 'bg-[var(--surface)] border-[var(--border)] text-[var(--muted)]'}`}>
+                          {f.done ? '✓ ' : ''}{f.label}
+                        </div>
+                      ))}
+                    </div>
+                    {missing && (
+                      <div className="flex items-center gap-2 text-xs text-[var(--brand)] bg-[#e6f1fb] border border-[#b8d0e8] rounded-lg px-3 py-2">
+                        <span>💡</span><span><strong>Tips:</strong> Lägg till {missing.label.toLowerCase()}</span>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
-            {/* Stats Card - View count */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[var(--brand-navy)]">Visningsstatistik</p>
-                    <p className="text-xs text-slate-500">Denna vecka</p>
-                  </div>
+            {/* === VISNINGSSTATISTIK === */}
+            <div className="bg-white border border-[var(--border)] rounded-[20px] p-5">
+              <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-3">Visningsstatistik</div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-[var(--brand-navy)]">{weeklyViews}</div>
+                  <div className="text-xs text-[var(--muted)] mt-0.5">visningar denna vecka</div>
                 </div>
-                <div className="text-right">
-                  <span className="text-3xl font-bold text-amber-600">{weeklyViews}</span>
-                  <span className="text-xs text-slate-400 block">visningar</span>
-                </div>
-              </div>
-              <div className="w-full h-1.5 bg-amber-100 rounded-full overflow-hidden">
-                <div className={`h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all duration-500`} style={{ width: `${Math.min(weeklyViews / 10 * 100, 100)}%` }} />
-              </div>
-            </div>
-
-            {/* Profile Strength Card */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/60 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                <div className="w-12 h-12 rounded-xl bg-[#e6f1fb] flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[var(--brand)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                   </svg>
                 </div>
-                <div>
-                  <p className="font-semibold text-[var(--brand-navy)]">Profilstyrka</p>
-                  <p className="text-xs text-slate-500">
-                    {(() => {
-                      const filled = [fullName, trade, city, bio, phone, avatarUrl, certificates.length > 0, experienceYears > 0].filter(Boolean).length;
-                      return `${filled}/8 komplett`;
-                    })()}
-                  </p>
-                </div>
               </div>
-              <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
-                  style={{ width: `${(() => {
-                    const filled = [fullName, trade, city, bio, phone, avatarUrl, certificates.length > 0, experienceYears > 0].filter(Boolean).length;
-                    return (filled / 8) * 100;
-                  })()}%` }} />
+              <div className="w-full h-1.5 bg-[var(--border)] rounded-full overflow-hidden mt-3">
+                <div className="h-full bg-[var(--brand)] rounded-full transition-all" style={{ width: `${Math.min(weeklyViews / 10 * 100, 100)}%` }} />
               </div>
             </div>
 
-            {/* Boost & Verification Row */}
-            <div className="grid grid-cols-2 gap-3">
-              
-              {/* Profile Boost */}
-              <div className={`rounded-2xl p-4 border transition-all ${
-                profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() 
-                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' 
-                  : 'bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200'
-              }`}>
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">⚡</span>
-                    <span className="text-xs font-semibold text-[var(--brand-navy)]">Framhäv</span>
-                  </div>
+            {/* === PREMIUM VERKTYG === */}
+            <div className="bg-white border border-[var(--border)] rounded-[20px] p-5">
+              <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-3">Verktyg</div>
+              <div className="grid grid-cols-2 gap-3">
+
+                {/* Boost */}
+                <div className={`rounded-xl p-4 border ${profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() ? 'bg-[#e6f1fb] border-[#b8d0e8]' : 'bg-[var(--surface)] border-[var(--border)]'}`}>
+                  <div className="text-lg mb-1">⚡</div>
+                  <div className="text-xs font-bold text-[var(--brand-navy)] mb-0.5">Framhäv profil</div>
                   {profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() ? (
-                    <>
-                      <p className="text-[10px] text-green-600 font-medium">✓ Aktiv</p>
-                      <p className="text-[10px] text-slate-500 mt-auto">t.o.m. {new Date(profileBoostEndsAt).toLocaleDateString('sv-SE')}</p>
-                    </>
+                    <div className="text-[10px] text-[var(--brand)] font-semibold">✓ Aktiv t.o.m. {new Date(profileBoostEndsAt).toLocaleDateString('sv-SE')}</div>
                   ) : (
                     <>
-                      <p className="text-[10px] text-slate-500 mb-2">49 kr/vecka</p>
-                      <button
-                        onClick={() => purchaseBoost('week')}
-                        className="mt-auto w-full py-2 bg-purple-600 text-white text-[10px] font-bold rounded-lg hover:bg-purple-700 transition"
-                      >
-                        Köp nu
-                      </button>
+                      <div className="text-[10px] text-[var(--muted)] mb-2">Syns högst upp · 49 kr/v</div>
+                      <button onClick={() => purchaseBoost('week')} className="w-full py-1.5 bg-[var(--brand)] text-white text-[10px] font-bold rounded-lg hover:bg-[var(--brand-hover)] transition">Köp nu</button>
                     </>
                   )}
                 </div>
-              </div>
 
-              {/* Verified Badge */}
-              <div className={`rounded-2xl p-4 border transition-all ${
-                hasVerifiedBadge 
-                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' 
-                  : 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
-              }`}>
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">✅</span>
-                    <span className="text-xs font-semibold text-[var(--brand-navy)]">Verifierad</span>
-                  </div>
+                {/* Verified */}
+                <div className={`rounded-xl p-4 border ${hasVerifiedBadge ? 'bg-[#e6f1fb] border-[#b8d0e8]' : 'bg-[var(--surface)] border-[var(--border)]'}`}>
+                  <div className="text-lg mb-1">✅</div>
+                  <div className="text-xs font-bold text-[var(--brand-navy)] mb-0.5">Verifierad</div>
                   {hasVerifiedBadge ? (
-                    <>
-                      <p className="text-[10px] text-green-600 font-medium">✓ Verifierad</p>
-                      <p className="text-[10px] text-slate-500 mt-auto">Yrkesperson</p>
-                    </>
+                    <div className="text-[10px] text-[var(--brand)] font-semibold">✓ Yrkesperson</div>
                   ) : (
                     <>
-                      <p className="text-[10px] text-slate-500 mb-2">99 kr</p>
-                      <button
-                        onClick={requestVerification}
-                        className="mt-auto w-full py-2 bg-blue-600 text-white text-[10px] font-bold rounded-lg hover:bg-blue-700 transition"
-                      >
-                        Verifiera
-                      </button>
+                      <div className="text-[10px] text-[var(--muted)] mb-2">Badgeverifiering · 99 kr</div>
+                      <button onClick={requestVerification} className="w-full py-1.5 bg-[var(--brand)] text-white text-[10px] font-bold rounded-lg hover:bg-[var(--brand-hover)] transition">Verifiera</button>
                     </>
                   )}
                 </div>
+
               </div>
             </div>
 
-            {/* Documents Card - CV & Cover Letter Upload */}
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-semibold text-[var(--brand-navy)]">CV & Personligt brev</p>
-                  <p className="text-xs text-slate-500">PDF, Word eller bild</p>
-                </div>
-              </div>
-              
-              {/* CV Upload */}
-              <div className="mb-3">
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">CV (PDF)</label>
-                <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-emerald-200 rounded-xl cursor-pointer bg-emerald-50/30 hover:bg-emerald-50 transition">
-                  <div className="flex flex-col items-center">
-                    <svg className="w-6 h-6 text-emerald-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                    </svg>
-                    <span className="text-[10px] text-emerald-600 font-medium">Klicka för att ladda upp CV</span>
+            {/* === CV UPLOAD === */}
+            <div className="bg-white border border-[var(--border)] rounded-[20px] p-5">
+              <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-3">CV & Personligt brev</div>
+              <div className="space-y-3">
+                {['CV (PDF)', 'Personligt brev'].map((label, i) => (
+                  <div key={label}>
+                    <div className="text-xs text-[var(--muted)] mb-1.5">{label}</div>
+                    <label className="flex items-center justify-center w-full h-16 border border-dashed border-[var(--border-strong)] rounded-xl cursor-pointer hover:bg-[#e6f1fb] hover:border-[var(--brand)] transition-all group">
+                      <div className="flex items-center gap-2 text-[var(--muted)] group-hover:text-[var(--brand)] transition-colors">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <span className="text-xs font-medium">Ladda upp {label.toLowerCase()}</span>
+                      </div>
+                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" />
+                    </label>
                   </div>
-                  <input type="file" accept=".pdf,.doc,.docx,image/*" className="hidden" />
-                </label>
+                ))}
+                <p className="text-[10px] text-[var(--muted)] text-center">Filer delas endast vid jobbansökan</p>
               </div>
-              
-              {/* Cover Letter Upload */}
-              <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">Personligt brev (valfritt)</label>
-                <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-slate-50/30 hover:bg-slate-50 transition">
-                  <div className="flex flex-col items-center">
-                    <svg className="w-5 h-5 text-slate-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                    <span className="text-[10px] text-slate-500">Personligt brev</span>
-                  </div>
-                  <input type="file" accept=".pdf,.doc,.docx,image/*" className="hidden" />
-                </label>
-              </div>
-              
-              <p className="text-[10px] text-slate-400 text-center">
-                Filer sparas säkert och delas endast vid jobbansökan
-              </p>
             </div>
 
           </div>
-
         </div>
       </main>
 
