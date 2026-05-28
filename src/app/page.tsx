@@ -125,39 +125,47 @@ export default function Home() {
 
         /* COMPANY LOGOS */
         .hw-logos {
+          max-width: 1200px;
+          margin: 0 auto;
           padding: 0 2rem 2rem;
           text-align: center;
         }
         .hw-logos-label {
           font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 1.5px;
+          font-weight: 500;
+          letter-spacing: 1px;
           text-transform: uppercase;
-          color: #94a3b8;
-          margin-bottom: 1.75rem;
+          color: #9ca3af;
+          margin-bottom: 2rem;
         }
         .hw-logos-grid {
           display: flex;
           flex-wrap: wrap;
           justify-content: center;
           align-items: center;
-          gap: 2.5rem 3rem;
+          gap: 2rem;
+        }
+        @media (min-width: 768px) {
+          .hw-logos-grid { gap: 4rem; }
         }
         .hw-logo-link {
-          filter: grayscale(100%) opacity(.55);
-          transition: all .3s;
           display: flex;
+          flex-direction: column;
           align-items: center;
+          justify-content: center;
+          filter: grayscale(100%);
+          opacity: 0.7;
+          transition: all 0.3s ease;
         }
         .hw-logo-link:hover {
-          filter: grayscale(0%) opacity(1);
-          transform: scale(1.05);
+          filter: grayscale(0%);
+          opacity: 1;
         }
-        .hw-logo-link img {
-          height: 44px;
+        .hw-logo-img {
+          height: 48px;
           width: auto;
           object-fit: contain;
-          max-width: 130px;
+          max-width: 140px;
         }
 
         /* TRUST */
