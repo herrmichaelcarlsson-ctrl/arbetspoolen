@@ -36,6 +36,7 @@ export default function SeekerDashboard() {
   const [contactEmail, setContactEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [isPremium, setIsPremium] = useState(false);
+  const [weeklyViews, setWeeklyViews] = useState(0);
   const [isPremiumLocked, setIsPremiumLocked] = useState(true);
 
   // Avatar state
