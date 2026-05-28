@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LinkButton } from "./ui/Button";
+import { MobileMenu } from "./ui/MobileMenu";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -75,7 +76,9 @@ export function AppShell({
 
   return (
     <div className="min-h-full flex flex-col bg-white text-[var(--foreground)]">
-      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/95 backdrop-blur-md">
+      <MobileMenu />
+      
+      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/95 backdrop-blur-md ml-0 lg:ml-0">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center shrink-0">
             <img
