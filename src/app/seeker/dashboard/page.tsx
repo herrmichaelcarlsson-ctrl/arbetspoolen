@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase';
 import { SWEDISH_CITIES, TRADES_BY_SECTOR } from '@/lib/constants';
 import ImageCropperModal from '@/components/ImageCropperModal';
 import { ProfileStrength } from '@/components/ProfileStrength';
-import { jsPDF } from 'jspdf';
 
 // Availability styling map for the live preview
 const AVAILABILITY_MAP: Record<string, { label: string; textClass: string; bgClass: string }> = {
@@ -41,7 +40,6 @@ export default function SeekerDashboard() {
   const [profileBoostEndsAt, setProfileBoostEndsAt] = useState<string | null>(null);
   const [hasVerifiedBadge, setHasVerifiedBadge] = useState(false);
   const [weeklyViews, setWeeklyViews] = useState(0);
-  const [selectedCvTheme, setSelectedCvTheme] = useState<'professional' | 'modern' | 'minimal'>('professional');
 
   // Avatar state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -286,96 +284,6 @@ export default function SeekerDashboard() {
       console.error('Verification error:', err);
       setErrorMessage('Kunde inte starta verifiering. Försök igen.');
     }
-  };
-
-  // Generate PDF CV
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    const themeColors = {
-      professional: [26, 95, 168],
-      modern: [99, 102, 241],
-      minimal: [0, 0, 0]
-    };
-    const color = themeColors[selectedCvTheme];
-    
-    // Header
-    doc.setFillColor(...color as [number, number, number]);
-    doc.rect(0, 0, 210, 40, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text(fullName || trade || 'CV', 20, 22);
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(trade || '', 20, 32);
-    
-    // Contact info
-    doc.setTextColor(...color as [number, number, number]);
-    let y = 55;
-    doc.setFontSize(10);
-    if (contactEmail) { doc.text(`📧 ${contactEmail}`, 20, y); y += 7; }
-    if (phone) { doc.text(`📞 ${phone}`, 20, y); y += 7; }
-    if (city) { doc.text(`📍 ${city}`, 20, y); y += 7; }
-    
-    // Bio
-    y += 10;
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Profil', 20, y);
-    doc.setDrawColor(...color as [number, number, number]);
-    doc.line(20, y + 2, 190, y + 2);
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(30, 30, 30);
-    y += 10;
-    const bioLines = doc.splitTextToSize(bio || 'Ingen biografi', 170);
-    doc.text(bioLines, 20, y);
-    y += bioLines.length * 6;
-    
-    // Experience
-    if (experienceYears > 0) {
-      y += 10;
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...color as [number, number, number]);
-      doc.text('Erfarenhet', 20, y);
-      doc.line(20, y + 2, 190, y + 2);
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(30, 30, 30);
-      y += 10;
-      doc.text(`${experienceYears} års erfarenhet`, 20, y);
-    }
-    
-    // Certificates
-    if (activeCertificates.length > 0) {
-      y += 15;
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...color as [number, number, number]);
-      doc.text('Certifikat', 20, y);
-      doc.line(20, y + 2, 190, y + 2);
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(30, 30, 30);
-      y += 10;
-      activeCertificates.forEach((cert: string) => {
-        doc.text(`✓ ${cert}`, 20, y);
-        y += 7;
-      });
-    }
-    
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(128, 128, 128);
-    doc.text('Skapad med ARBETSpoolen', 20, 285);
-    
-    doc.save(`${fullName || 'cv'}_ARBETSpoolen.pdf`);
   };
 
   // Get Initials for avatar preview
@@ -1086,51 +994,51 @@ export default function SeekerDashboard() {
               </div>
             </div>
 
-            {/* CV Builder Card */}
-            <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-200/60 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[var(--brand-navy)]">CV-byggare</p>
-                    <p className="text-xs text-slate-500">Gratis för alla</p>
-                  </div>
+            {/* Documents Card - CV & Cover Letter Upload */}
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[var(--brand-navy)]">CV & Personligt brev</p>
+                  <p className="text-xs text-slate-500">PDF, Word eller bild</p>
                 </div>
               </div>
               
-              {/* Theme Selector */}
-              <div className="flex gap-2 mb-4">
-                {(['professional', 'modern', 'minimal'] as const).map((theme) => (
-                  <button
-                    key={theme}
-                    onClick={() => setSelectedCvTheme(theme)}
-                    className={`flex-1 py-2 rounded-lg border-2 capitalize text-[10px] font-semibold transition-all ${
-                      selectedCvTheme === theme 
-                        ? 'border-[var(--brand)] bg-blue-50 text-[var(--brand)]' 
-                        : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                    }`}
-                  >
-                    {theme === 'professional' && '🎨'}
-                    {theme === 'modern' && '✨'}
-                    {theme === 'minimal' && '⬜'}
-                    <span className="ml-1">{theme}</span>
-                  </button>
-                ))}
+              {/* CV Upload */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">CV (PDF)</label>
+                <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-emerald-200 rounded-xl cursor-pointer bg-emerald-50/30 hover:bg-emerald-50 transition">
+                  <div className="flex flex-col items-center">
+                    <svg className="w-6 h-6 text-emerald-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <span className="text-[10px] text-emerald-600 font-medium">Klicka för att ladda upp CV</span>
+                  </div>
+                  <input type="file" accept=".pdf,.doc,.docx,image/*" className="hidden" />
+                </label>
               </div>
               
-              <button
-                onClick={generatePDF}
-                className="w-full py-3 bg-[var(--brand)] text-white font-semibold rounded-xl hover:bg-[var(--brand-hover)] transition flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Ladda ner PDF
-              </button>
+              {/* Cover Letter Upload */}
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Personligt brev (valfritt)</label>
+                <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-slate-50/30 hover:bg-slate-50 transition">
+                  <div className="flex flex-col items-center">
+                    <svg className="w-5 h-5 text-slate-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    <span className="text-[10px] text-slate-500">Personligt brev</span>
+                  </div>
+                  <input type="file" accept=".pdf,.doc,.docx,image/*" className="hidden" />
+                </label>
+              </div>
+              
+              <p className="text-[10px] text-slate-400 text-center">
+                Filer sparas säkert och delas endast vid jobbansökan
+              </p>
             </div>
 
           </div>
