@@ -169,6 +169,26 @@ function EmployerDirectoryContent() {
     }
   };
 
+  // Purchase recruitment package
+  const purchaseRecruitmentPackage = async () => {
+    if (!currentUser) return;
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      const response = await fetch('/api/stripe/premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+        body: JSON.stringify({ product: 'recruitment_package' })
+      });
+      const data = await response.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err: any) {
+      setCheckoutError(err.message || 'Kunde inte starta köp. Försök igen.');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/');
@@ -234,6 +254,9 @@ function EmployerDirectoryContent() {
         .paywall-glow { position: absolute; top: -30%; right: -10%; width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%); pointer-events: none; }
         .paywall-header-card h3 { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fef08a; margin: 0 0 0.5rem; display: flex; align-items: center; gap: 8px; }
         .paywall-header-card p { font-size: 14px; color: #94a3b8; margin: 0 0 1.5rem; max-width: 600px; line-height: 1.6; }
+        
+        /* RECRUITMENT PACKAGE CARD */
+        .recruitment-package-card { background: linear-gradient(135deg, #faf5ff 0%, #f0f9ff 100%); border: 1px solid #e9d5ff; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
         
         /* CANDIDATE CARD */
         .candidate-card { background: #fff; border: 1px solid #e0eaf4; border-radius: 20px; padding: 1.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.25s ease; position: relative; }
@@ -412,6 +435,31 @@ function EmployerDirectoryContent() {
                 </button>
               </div>
             )}
+
+            {/* Recruitment Package CTA */}
+            <div className="recruitment-package-card">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    🎯 Rekryteringspaket - Handplockad shortlist
+                  </h3>
+                  <p className="text-slate-600 mt-2">
+                    Vi matchar 5 kandidater till din lediga tjänst baserat på dina behov. Perfekt när du behöver ny personal snabbt.
+                  </p>
+                  <div className="mt-3 flex items-center gap-4">
+                    <span className="text-2xl font-bold text-purple-600">2 999 kr</span>
+                    <span className="text-sm text-slate-400">engångsavgift</span>
+                  </div>
+                </div>
+                <button
+                  onClick={purchaseRecruitmentPackage}
+                  disabled={checkoutLoading}
+                  className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition whitespace-nowrap"
+                >
+                  Beställ nu →
+                </button>
+              </div>
+            </div>
 
             {/* Candidate Listings Grid */}
             {isFetchingCandidates ? (

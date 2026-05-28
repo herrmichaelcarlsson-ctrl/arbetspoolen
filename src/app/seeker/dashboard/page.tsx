@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { SWEDISH_CITIES, TRADES_BY_SECTOR } from '@/lib/constants';
 import ImageCropperModal from '@/components/ImageCropperModal';
 import { ProfileStrength } from '@/components/ProfileStrength';
+import { jsPDF } from 'jspdf';
 
 // Availability styling map for the live preview
 const AVAILABILITY_MAP: Record<string, { label: string; textClass: string; bgClass: string }> = {
@@ -37,6 +38,11 @@ export default function SeekerDashboard() {
   const [phone, setPhone] = useState('');
   const [isPremium, setIsPremium] = useState(false);
   const [isPremiumLocked, setIsPremiumLocked] = useState(true);
+  const [profileBoostEndsAt, setProfileBoostEndsAt] = useState<string | null>(null);
+  const [hasVerifiedBadge, setHasVerifiedBadge] = useState(false);
+  const [weeklyViews, setWeeklyViews] = useState(0);
+  const [showCvBuilder, setShowCvBuilder] = useState(false);
+  const [selectedCvTheme, setSelectedCvTheme] = useState<'professional' | 'modern' | 'minimal'>('professional');
 
   // Avatar state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -95,7 +101,18 @@ export default function SeekerDashboard() {
           setIsPremium(profile.is_premium || false);
           setAvatarUrl(profile.avatar_url || null);
           setIsPremiumLocked(profile.is_premium_locked ?? true);
+          setProfileBoostEndsAt(profile.profile_boost_ends_at || null);
+          setHasVerifiedBadge(profile.has_verified_badge || false);
         }
+
+        // Load weekly views stats
+        try {
+          const res = await fetch('/api/profile/views/stats', { headers: { 'x-user-id': user.id } });
+          if (res.ok) {
+            const stats = await res.json();
+            setWeeklyViews(stats.weekly_count || 0);
+          }
+        } catch (e) { /* stats optional */ }
 
         if (contact) {
           setFullName(contact.full_name || '');
@@ -238,6 +255,130 @@ export default function SeekerDashboard() {
     }
   };
 
+  // Purchase profile boost
+  const purchaseBoost = async (duration: 'week' | 'month') => {
+    if (!userId) return;
+    try {
+      const res = await fetch('/api/stripe/premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+        body: JSON.stringify({ product: duration === 'week' ? 'candidate_boost' : 'candidate_boost_month' })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      console.error('Purchase error:', err);
+      setErrorMessage('Kunde inte starta köp. Försök igen.');
+    }
+  };
+
+  // Request verification
+  const requestVerification = async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch('/api/stripe/premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+        body: JSON.stringify({ product: 'verification' })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      console.error('Verification error:', err);
+      setErrorMessage('Kunde inte starta verifiering. Försök igen.');
+    }
+  };
+
+  // Generate PDF CV
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const themeColors = {
+      professional: [26, 95, 168],
+      modern: [99, 102, 241],
+      minimal: [0, 0, 0]
+    };
+    const color = themeColors[selectedCvTheme];
+    
+    // Header
+    doc.setFillColor(...color as [number, number, number]);
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text(fullName || trade || 'CV', 20, 22);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(trade || '', 20, 32);
+    
+    // Contact info
+    doc.setTextColor(...color as [number, number, number]);
+    let y = 55;
+    doc.setFontSize(10);
+    if (contactEmail) { doc.text(`📧 ${contactEmail}`, 20, y); y += 7; }
+    if (phone) { doc.text(`📞 ${phone}`, 20, y); y += 7; }
+    if (city) { doc.text(`📍 ${city}`, 20, y); y += 7; }
+    
+    // Bio
+    y += 10;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Profil', 20, y);
+    doc.setDrawColor(...color as [number, number, number]);
+    doc.line(20, y + 2, 190, y + 2);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    y += 10;
+    const bioLines = doc.splitTextToSize(bio || 'Ingen biografi', 170);
+    doc.text(bioLines, 20, y);
+    y += bioLines.length * 6;
+    
+    // Experience
+    if (experienceYears > 0) {
+      y += 10;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...color as [number, number, number]);
+      doc.text('Erfarenhet', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(30, 30, 30);
+      y += 10;
+      doc.text(`${experienceYears} års erfarenhet`, 20, y);
+    }
+    
+    // Certificates
+    if (activeCertificates.length > 0) {
+      y += 15;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...color as [number, number, number]);
+      doc.text('Certifikat', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(30, 30, 30);
+      y += 10;
+      activeCertificates.forEach((cert: string) => {
+        doc.text(`✓ ${cert}`, 20, y);
+        y += 7;
+      });
+    }
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.text('Skapad med ARBETSpoolen', 20, 285);
+    
+    doc.save(`${fullName || 'cv'}_ARBETSpoolen.pdf`);
+  };
+
   // Get Initials for avatar preview
   const getInitials = (name: string) => {
     if (!name) return 'ST';
@@ -307,6 +448,100 @@ export default function SeekerDashboard() {
                 certificates={certificates}
                 experienceYears={experienceYears}
               />
+
+              {/* Premium Features Section */}
+              <div className="mt-6 space-y-4">
+                <h3 className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">✨ Premium-funktioner</h3>
+                
+                {/* View Stats Card */}
+                <div className="p-4 rounded-xl border border-amber-100 bg-amber-50/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📊</span>
+                      <div>
+                        <p className="font-semibold text-[var(--brand-navy)]">Visningsstatistik</p>
+                        <p className="text-xs text-[var(--muted)]">Gratis: {weeklyViews} visningar denna vecka</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-amber-600">{weeklyViews}</span>
+                  </div>
+                </div>
+
+                {/* Profile Boost Card */}
+                <div className={`p-4 rounded-xl border ${profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() ? 'border-green-200 bg-green-50/50' : 'border-purple-100 bg-purple-50/50'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">⚡</span>
+                      <div>
+                        <p className="font-semibold text-[var(--brand-navy)]">Framhäv din profil</p>
+                        {profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() ? (
+                          <p className="text-xs text-green-600">✓ Aktiv t.o.m. {new Date(profileBoostEndsAt).toLocaleDateString('sv-SE')}</p>
+                        ) : (
+                          <p className="text-xs text-[var(--muted)]">49 kr/vecka - Synas överst</p>
+                        )}
+                      </div>
+                    </div>
+                    {!profileBoostEndsAt || new Date(profileBoostEndsAt) <= new Date() ? (
+                      <button
+                        type="button"
+                        onClick={() => purchaseBoost('week')}
+                        className="px-4 py-2 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700"
+                      >
+                        Köp 49 kr
+                      </button>
+                    ) : (
+                      <span className="text-green-600">✓</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Verified Badge Card */}
+                <div className={`p-4 rounded-xl border ${hasVerifiedBadge ? 'border-green-200 bg-green-50/50' : 'border-blue-100 bg-blue-50/50'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">✅</span>
+                      <div>
+                        <p className="font-semibold text-[var(--brand-navy)]">Verifierad yrkesperson</p>
+                        {hasVerifiedBadge ? (
+                          <p className="text-xs text-green-600">✓ Verifierad</p>
+                        ) : (
+                          <p className="text-xs text-[var(--muted)]">99 kr - Verifiera dina certifikat</p>
+                        )}
+                      </div>
+                    </div>
+                    {!hasVerifiedBadge && (
+                      <button
+                        type="button"
+                        onClick={requestVerification}
+                        className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700"
+                      >
+                        Verifiera 99 kr
+                      </button>
+                    )}
+                    {hasVerifiedBadge && <span className="text-green-600">✓</span>}
+                  </div>
+                </div>
+
+                {/* CV Builder Card */}
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📄</span>
+                      <div>
+                        <p className="font-semibold text-[var(--brand-navy)]">CV-byggare</p>
+                        <p className="text-xs text-[var(--muted)]">Gratis - Ladda ner PDF-CV</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowCvBuilder(true)}
+                      className="px-4 py-2 bg-slate-600 text-white text-xs font-semibold rounded-lg hover:bg-slate-700"
+                    >
+                      Bygg CV
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-6 mt-8">
 
@@ -819,6 +1054,58 @@ export default function SeekerDashboard() {
 
         </div>
       </main>
+
+      {/* CV Builder Modal */}
+      {showCvBuilder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-[var(--brand-navy)] mb-4">📄 CV-byggare</h2>
+            
+            <div className="mb-4">
+              <p className="text-sm font-medium text-[var(--muted)] mb-2">Välj design:</p>
+              <div className="flex gap-2">
+                {(['professional', 'modern', 'minimal'] as const).map((theme) => (
+                  <button
+                    key={theme}
+                    onClick={() => setSelectedCvTheme(theme)}
+                    className={`px-4 py-2 rounded-lg border-2 capitalize transition ${
+                      selectedCvTheme === theme ? 'border-[var(--brand)] bg-blue-50' : 'border-[var(--border)]'
+                    }`}
+                  >
+                    {theme}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="mb-6 p-4 bg-[var(--surface)] rounded-lg">
+              <p className="text-sm text-[var(--muted)]">Ditt CV kommer inkludera:</p>
+              <ul className="text-xs text-[var(--brand-navy)] mt-2 space-y-1">
+                <li>✓ Namn och yrke</li>
+                <li>✓ Kontaktuppgifter</li>
+                <li>✓ Biografi</li>
+                <li>✓ Erfarenhet ({experienceYears} år)</li>
+                {activeCertificates.length > 0 && <li>✓ Certifikat ({activeCertificates.length})</li>}
+              </ul>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={generatePDF}
+                className="flex-1 py-3 bg-[var(--brand)] text-white font-semibold rounded-xl hover:bg-[var(--brand-hover)]"
+              >
+                📥 Ladda ner PDF
+              </button>
+              <button
+                onClick={() => setShowCvBuilder(false)}
+                className="px-4 py-3 text-[var(--muted)] hover:text-[var(--brand-navy)]"
+              >
+                Stäng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ImageCropperModal
         imageSrc={selectedImageSrc}
