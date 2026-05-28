@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 export async function GET(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id');
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       .eq('profile_id', userId)
       .single();
 
-    if (-error && error.code !== 'PGRST116') {
+    if (error && error.code !== 'PGRST116') {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id');
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const { document_url, document_type } = body;
 
     if (!document_url || !document_type) {
-      return NextResponse.json[{ error: 'Missing required fields' }, { status: 400 }];
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const { error } = await supabaseAdmin
