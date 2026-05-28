@@ -34,13 +34,15 @@ export default function CandidateProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
 
+      let userIsPremium = false;
       if (user) {
         const { data: profile } = await supabase
           .from('profiles').select('is_premium, role, company_name').eq('id', user.id).single();
-        setIsPremium(profile?.is_premium || false);
+        userIsPremium = profile?.is_premium || false;
+        setIsPremium(userIsPremium);
 
         // Log this view
-        if (profile?.is_premium) {
+        if (userIsPremium) {
           await supabase.from('profile_views').insert({
             profile_id: candidateId,
             viewer_id: user.id,
@@ -50,18 +52,18 @@ export default function CandidateProfilePage() {
       }
 
       // Load candidate profile
-      const { data: cand } = await supabase
+      const { data: cand, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', candidateId)
         .eq('role', 'job_seeker')
         .single();
 
-      if (!cand) { setNotFound(true); setLoading(false); return; }
+      if (error || !cand) { setNotFound(true); setLoading(false); return; }
       setCandidate(cand);
 
       // Load contact details if premium
-      if (isPremium || (user && (await supabase.from('profiles').select('is_premium').eq('id', user.id).single()).data?.is_premium)) {
+      if (userIsPremium || user) {
         const { data: cd } = await supabase
           .from('profile_contact_details')
           .select('*')
@@ -90,7 +92,7 @@ export default function CandidateProfilePage() {
     </div>
   );
 
-  if (notFound) return (
+  if (notFound || !candidate) return (
     <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, fontFamily: 'DM Sans, sans-serif' }}>
       <div style={{ fontSize: 48 }}>👤</div>
       <h2 style={{ fontFamily: 'DM Serif Display, serif', color: '#1a3a5c', margin: 0 }}>Kandidaten hittades inte</h2>
