@@ -25,4 +25,6 @@ export interface ProfileContactDetails {
 
 export interface CandidateProfile extends Profile {
   profile_contact_details?: ProfileContactDetails | null;
+  cv_url?: string | null;
+  cover_letter_url?: string | null;
 }

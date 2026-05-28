@@ -40,6 +40,11 @@ export default function SeekerDashboard() {
   const [isPremiumLocked, setIsPremiumLocked] = useState(true);
   const [profileBoostEndsAt, setProfileBoostEndsAt] = useState<string | null>(null);
   const [hasVerifiedBadge, setHasVerifiedBadge] = useState(false);
+  
+  // Document upload state
+  const [cvFile, setCvFile] = useState<{name: string; url: string} | null>(null);
+  const [coverLetterFile, setCoverLetterFile] = useState<{name: string; url: string} | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
 
   // Avatar state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -296,6 +301,56 @@ export default function SeekerDashboard() {
       console.error('Verification error:', err);
     }
   };
+
+  // Handle document upload
+  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cv' | 'cover_letter') => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    if (file.size > 10 * 1024 * 1024) { setErrorMessage('Filen får max vara 10 MB.'); return; }
+    
+    setUploadingDoc(type);
+    setErrorMessage(null);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+      const path = `${userId}/${type}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('documents').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('documents').getPublicUrl(path);
+      const url = data.publicUrl;
+      if (type === 'cv') {
+        setCvFile({ name: file.name, url });
+      } else {
+        setCoverLetterFile({ name: file.name, url });
+      }
+      // Save URL to profile
+      await supabase.from('profiles').update({ [type === 'cv' ? 'cv_url' : 'cover_letter_url']: url }).eq('id', userId);
+      setSuccessMessage(`${type === 'cv' ? 'CV' : 'Personligt brev'} uppladdat!`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setErrorMessage('Kunde inte ladda upp filen.');
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  // Remove document
+  const removeDoc = async (type: 'cv' | 'cover_letter') => {
+    if (!userId) return;
+    if (type === 'cv') setCvFile(null);
+    else setCoverLetterFile(null);
+    await supabase.from('profiles').update({ [type === 'cv' ? 'cv_url' : 'cover_letter_url']: null }).eq('id', userId);
+  };
+
+  // Load documents on mount
+  useEffect(() => {
+    const loadDocs = async () => {
+      if (!userId) return;
+      const { data: profile } = await supabase.from('profiles').select('cv_url, cover_letter_url').eq('id', userId).single();
+      if (profile?.cv_url) setCvFile({ name: 'CV.pdf', url: profile.cv_url });
+      if (profile?.cover_letter_url) setCoverLetterFile({ name: 'Personligt_brev.pdf', url: profile.cover_letter_url });
+    };
+    if (userId) loadDocs();
+  }, [userId]);
 
   // Get Initials for avatar preview
   const getInitials = (name: string) => {
@@ -869,21 +924,74 @@ export default function SeekerDashboard() {
             {/* === CV UPLOAD === */}
             <div className="bg-white border border-[var(--border)] rounded-[20px] p-5">
               <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-3">CV & Personligt brev</div>
-              <div className="space-y-3">
-                {['CV (PDF)', 'Personligt brev'].map((label, i) => (
-                  <div key={label}>
-                    <div className="text-xs text-[var(--muted)] mb-1.5">{label}</div>
+              <div className="space-y-4">
+                
+                {/* CV Upload */}
+                <div>
+                  <div className="text-xs text-[var(--muted)] mb-1.5">CV (PDF)</div>
+                  {cvFile ? (
+                    <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-emerald-600">📄</span>
+                        <span className="text-xs font-medium text-emerald-700 truncate">{cvFile.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <a href={cvFile.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-emerald-600 hover:bg-emerald-100 rounded-lg">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </a>
+                        <button onClick={() => removeDoc('cv')} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
                     <label className="flex items-center justify-center w-full h-16 border border-dashed border-[var(--border-strong)] rounded-xl cursor-pointer hover:bg-[#e6f1fb] hover:border-[var(--brand)] transition-all group">
                       <div className="flex items-center gap-2 text-[var(--muted)] group-hover:text-[var(--brand)] transition-colors">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                        </svg>
-                        <span className="text-xs font-medium">Ladda upp {label.toLowerCase()}</span>
+                        {uploadingDoc === 'cv' ? (
+                          <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        )}
+                        <span className="text-xs font-medium">{uploadingDoc === 'cv' ? 'Laddar upp...' : 'Ladda upp CV'}</span>
                       </div>
-                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" />
+                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => handleDocUpload(e, 'cv')} />
                     </label>
-                  </div>
-                ))}
+                  )}
+                </div>
+                
+                {/* Cover Letter Upload */}
+                <div>
+                  <div className="text-xs text-[var(--muted)] mb-1.5">Personligt brev</div>
+                  {coverLetterFile ? (
+                    <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-blue-600">📧</span>
+                        <span className="text-xs font-medium text-blue-700 truncate">{coverLetterFile.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <a href={coverLetterFile.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </a>
+                        <button onClick={() => removeDoc('cover_letter')} className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center w-full h-14 border border-dashed border-[var(--border)] rounded-xl cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition-all group">
+                      <div className="flex items-center gap-2 text-[var(--muted)] group-hover:text-slate-600 transition-colors">
+                        {uploadingDoc === 'cover_letter' ? (
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        )}
+                        <span className="text-xs font-medium">{uploadingDoc === 'cover_letter' ? 'Laddar upp...' : 'Ladda upp personligt brev'}</span>
+                      </div>
+                      <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => handleDocUpload(e, 'cover_letter')} />
+                    </label>
+                  )}
+                </div>
+                
                 <p className="text-[10px] text-[var(--muted)] text-center">Filer delas endast vid jobbansökan</p>
               </div>
             </div>
