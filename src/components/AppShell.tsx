@@ -89,13 +89,21 @@ export function AppShell({
           </Link>
 
           <nav className="flex items-center gap-2">
+            <LinkButton href="/jobs" variant="ghost" size="sm" className="hidden md:inline-flex">
+              Lediga jobb
+            </LinkButton>
             <LinkButton href="/employer/directory" variant="ghost" size="sm" className="hidden md:inline-flex">
               Hitta kompetens
             </LinkButton>
             {userRole === 'employer' && (
-              <LinkButton href="/employer/saved" variant="ghost" size="sm" className="hidden md:inline-flex">
-                ★ Sparade
-              </LinkButton>
+              <>
+                <LinkButton href="/employer/dashboard" variant="ghost" size="sm" className="hidden md:inline-flex">
+                  📋 Mina annonser
+                </LinkButton>
+                <LinkButton href="/employer/saved" variant="ghost" size="sm" className="hidden md:inline-flex">
+                  ★ Sparade
+                </LinkButton>
+              </>
             )}
 
             {/* --- HÄR ÄR LOGIKEN FÖR INLOGGAD VS UTLOGGAD --- */}
