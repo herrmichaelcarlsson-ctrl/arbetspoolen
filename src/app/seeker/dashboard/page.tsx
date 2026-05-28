@@ -354,19 +354,6 @@ export default function SeekerDashboard() {
                 </div>
               )}
 
-              {/* Profilstyrka-räknare */}
-              <ProfileStrength
-                fullName={fullName}
-                trade={trade}
-                city={city}
-                bio={bio}
-                phone={phone}
-                avatarUrl={avatarUrl}
-                avatarPreview={avatarPreview}
-                certificates={certificates}
-                experienceYears={experienceYears}
-              />
-
               <form onSubmit={handleSaveProfile} className="space-y-6 mt-8">
 
                 {/* 0. Profilbild */}
