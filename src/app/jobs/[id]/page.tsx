@@ -31,16 +31,14 @@ export default function JobDetailPage() {
   useEffect(() => {
     const fetchListing = async () => {
       try {
-        // First try without is_active filter to see if record exists
+        // Simple query without joins
         const { data, error } = await supabase
           .from('job_listings')
-          .select(`
-            *,
-            employer:profiles(id, trade, city),
-            employer_details:employer_company_details(company_name, company_logo_url, company_description, company_website)
-          `)
+          .select('*')
           .eq('id', params.id)
           .single();
+
+        console.log('Job detail query:', { data, error });
 
         if (error || !data) {
           setError('Annonsen hittades inte');
@@ -51,12 +49,7 @@ export default function JobDetailPage() {
         // Increment view count (ignore if fails)
         try { await supabase.rpc('increment_job_view', { listing_id: params.id }); } catch {}
 
-        setListing({
-          ...data,
-          company_name: data.employer_details?.company_name || null,
-          company_logo_url: data.employer_details?.company_logo_url || null,
-          employer_details: data.employer_details,
-        });
+        setListing(data);
       } catch (err: any) {
         setError(err.message || 'Kunde inte hämta annonsen');
       } finally {
@@ -193,18 +186,7 @@ export default function JobDetailPage() {
             <p className="job-description">{listing.description}</p>
           </div>
 
-          {listing.company_name && (
-            <div className="job-body">
-              <h2 className="job-section-title">Om arbetsgivaren</h2>
-              <div className="job-company-card">
-                <div className="company-logo">{listing.company_name.charAt(0)}</div>
-                <h3 className="company-name">{listing.company_name}</h3>
-                {listing.employer_details?.company_description && (
-                  <p className="company-desc">{listing.employer_details.company_description}</p>
-                )}
-              </div>
-            </div>
-          )}
+          
 
           <div className="job-actions">
             <a href={`mailto:?subject=Ansöker: ${listing.title}&body=Hej, jag är intresserad av tjänsten "${listing.title}" hos ${listing.company_name || 'er'}...`} className="action-btn action-primary">

@@ -45,13 +45,10 @@ function JobsContent() {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
       
+      // Simple query without joins first to test
       let query = supabase
         .from('job_listings')
-        .select(`
-          *,
-          employer:profiles(id, trade, city),
-          employer_details:employer_company_details(company_name, company_logo_url)
-        `, { count: 'exact' });
+        .select('*', { count: 'exact' });
 
       if (trade) query = query.eq('trade', trade);
       if (city) query = query.eq('city', city);
@@ -69,6 +66,8 @@ function JobsContent() {
       query = query.range(from, to);
 
       const { data, error, count } = await query;
+      
+      console.log('Jobs query result:', { data, error, count });
 
       if (error) throw error;
 
