@@ -61,11 +61,24 @@ export default function EmployerProfilePage() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${Math.random()}.${fileExt}`;
       
+      // Test connection first
+      const { data: listTest, error: listError } = await supabase.storage.from('company-logos').list(userId, { limit: 1 });
+      console.log('Company logos list test:', { listTest, listError });
+      
+      if (listError && listError.message?.includes('not found')) {
+        throw new Error('Company-logos bucket hittades inte i Supabase. Kontrollera att den är skapad.');
+      }
+      
       const { error: uploadError } = await supabase.storage
         .from('company-logos')
         .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      console.log('Logo upload result:', uploadError);
+      
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(uploadError.message || 'Kunde inte ladda upp logotypen');
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('company-logos')
@@ -73,7 +86,8 @@ export default function EmployerProfilePage() {
 
       setCompanyLogoUrl(publicUrl);
     } catch (error: any) {
-      alert(`Error uploading image: ${error.message}`);
+      console.error('Logo upload error:', error);
+      alert(`Kunde inte ladda upp logotypen. ${error?.message || ''}\n\nKontrollera att 'company-logos' bucket finns i Supabase.`);
     } finally {
       setSaving(false);
     }

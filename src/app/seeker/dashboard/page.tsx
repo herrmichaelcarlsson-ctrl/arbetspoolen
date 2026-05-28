@@ -169,8 +169,24 @@ export default function SeekerDashboard() {
     try {
       const ext = 'jpg';
       const path = `${userId}/avatar.${ext}`;
-      const { error } = await supabase.storage.from('avatars').upload(path, croppedBlob, { upsert: true });
-      if (error) throw error;
+      
+      // First check if we can list files (tests connection)
+      const { data: listTest, error: listError } = await supabase.storage.from('avatars').list(userId, { limit: 1 });
+      console.log('List test:', { listTest, listError });
+      
+      if (listError && listError.message?.includes('not found')) {
+        // Bucket might not exist - try to create it or report error
+        throw new Error('Avatar-bucket hittades inte i Supabase. Kontrollera att den är skapad.');
+      }
+      
+      const { data: uploadData, error } = await supabase.storage.from('avatars').upload(path, croppedBlob, { upsert: true });
+      console.log('Upload result:', { uploadData, error });
+      
+      if (error) {
+        console.error('Upload error details:', error);
+        throw new Error(error.message || 'Kunde inte ladda upp bilden');
+      }
+      
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
       const url = data.publicUrl;
       await supabase.from('profiles').update({ avatar_url: url }).eq('id', userId);
@@ -179,7 +195,8 @@ export default function SeekerDashboard() {
       setSuccessMessage('Profilbild uppdaterad!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      setErrorMessage('Kunde inte ladda upp bilden.');
+      console.error('Avatar upload error:', err);
+      setErrorMessage('Kunde inte ladda upp bilden. ' + (err?.message || err?.code || ''));
     } finally {
       setAvatarUploading(false);
     }
@@ -313,8 +330,23 @@ export default function SeekerDashboard() {
     try {
       const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
       const path = `${userId}/${type}.${ext}`;
+      
+      // Test connection first
+      const { data: listTest, error: listError } = await supabase.storage.from('documents').list(userId, { limit: 1 });
+      console.log('Documents list test:', { listTest, listError });
+      
+      if (listError && listError.message?.includes('not found')) {
+        throw new Error('Documents-bucket hittades inte i Supabase. Kontrollera att den är skapad.');
+      }
+      
       const { error: uploadError } = await supabase.storage.from('documents').upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
+      console.log('Document upload result:', uploadError);
+      
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(uploadError.message || 'Kunde inte ladda upp filen');
+      }
+      
       const { data } = supabase.storage.from('documents').getPublicUrl(path);
       const url = data.publicUrl;
       if (type === 'cv') {
@@ -327,7 +359,8 @@ export default function SeekerDashboard() {
       setSuccessMessage(`${type === 'cv' ? 'CV' : 'Personligt brev'} uppladdat!`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      setErrorMessage('Kunde inte ladda upp filen.');
+      console.error('Doc upload error:', err);
+      setErrorMessage('Kunde inte ladda upp filen. ' + (err?.message || err?.code || ''));
     } finally {
       setUploadingDoc(null);
     }
