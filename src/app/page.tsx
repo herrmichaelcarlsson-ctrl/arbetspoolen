@@ -122,6 +122,51 @@ export default function Home() {
         .hw-btn-outline { background: transparent; border-color: #b8d0e8; color: #1a3a5c; }
         .hw-btn-outline:hover { background: #eaf3fb; }
 
+        /* COMPANY LOGOS */
+        .hw-logos {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 2rem 2rem;
+          text-align: center;
+        }
+        .hw-logos-label {
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          color: #9ca3af;
+          margin-bottom: 1.5rem;
+        }
+        .hw-logos-grid {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
+          gap: 2rem;
+        }
+        @media (min-width: 768px) {
+          .hw-logos-grid { gap: 4rem; }
+        }
+        .hw-logo-link {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          filter: grayscale(100%);
+          opacity: 0.7;
+          transition: all 0.3s ease;
+        }
+        .hw-logo-link:hover {
+          filter: grayscale(0%);
+          opacity: 1;
+        }
+        .hw-logo-img {
+          height: 48px;
+          width: auto;
+          object-fit: contain;
+          max-width: 140px;
+        }
+
         /* TRUST */
         .hw-trust { background: #fff; padding: 2rem 2rem; border-bottom: 1px solid #e8eef4; }
         .hw-trust-inner {
@@ -348,18 +393,18 @@ export default function Home() {
         {/* ── LOGOS ── */}
         {companies.length > 0 && (
           <section className="hw-logos">
-            <div className="hw-logos-inner">
-              <p className="hw-logos-label">Företag som letar talang på plattformen</p>
-              <div className="hw-logos-grid">
-                {companies.map(c => (
-                  <a key={c.id} href={`/company/${c.id}`} className="hw-logo-link">
-                    <img src={c.company_logo_url} alt={c.company_name || 'Företag'} />
-                  </a>
-                ))}
-              </div>
+            <p className="hw-logos-label">Företag som letar talang på plattformen</p>
+            <div className="hw-logos-grid">
+              {companies.map(c => (
+                <a key={c.id} href={`/company/${c.id}`} className="hw-logo-link">
+                  <img src={c.company_logo_url} alt={c.company_name || 'Company'} className="hw-logo-img" />
+                </a>
+              ))}
             </div>
           </section>
         )}
+
+        {/* ── TRUST ── */}
 
         {/* ── HOW IT WORKS ── */}
         <section className="hw-section">
