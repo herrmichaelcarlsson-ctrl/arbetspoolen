@@ -286,69 +286,95 @@ export default function CandidateProfilePage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Documents Section */}
-            {(candidate.cv_url || candidate.cover_letter_url) && (
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  <span>📄</span> Nedladdningar
-                  {hasContact && (
-                    <span className="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
-                      ✓ Tillgängliga
-                    </span>
-                  )}
-                </h3>
-                <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 space-y-3">
-                  {candidate.cv_url && (
-                    <a 
-                      href={candidate.cv_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                          <span className="text-emerald-600 text-lg">📄</span>
+            {/* Documents Section - Premium Only */}
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <span>📄</span> Nedladdningar
+                {!hasContact && (
+                  <span className="ml-2 px-2 py-0.5 bg-slate-100 text-slate-500 text-xs font-medium rounded-full">
+                    🔒 Premium låst
+                  </span>
+                )}
+                {hasContact && (candidate.cv_url || candidate.cover_letter_url) && (
+                  <span className="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                    ✓ Tillgängliga
+                  </span>
+                )}
+              </h3>
+              
+              {hasContact ? (
+                (candidate.cv_url || candidate.cover_letter_url) ? (
+                  <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 space-y-3">
+                    {candidate.cv_url && (
+                      <a 
+                        href={candidate.cv_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                            <span className="text-emerald-600 text-lg">📄</span>
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-slate-800">CV</div>
+                            <div className="text-xs text-slate-500">PDF-dokument</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-bold text-slate-800">CV</div>
-                          <div className="text-xs text-slate-500">PDF-dokument</div>
+                        <div className="flex items-center gap-2 text-emerald-600 group-hover:text-emerald-700">
+                          <span className="text-xs font-medium">Ladda ner</span>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                          </svg>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-emerald-600 group-hover:text-emerald-700">
-                        <span className="text-xs font-medium">Ladda ner</span>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                      </div>
-                    </a>
-                  )}
-                  {candidate.cover_letter_url && (
-                    <a 
-                      href={candidate.cover_letter_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                          <span className="text-blue-600 text-lg">📧</span>
+                      </a>
+                    )}
+                    {candidate.cover_letter_url && (
+                      <a 
+                        href={candidate.cover_letter_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <span className="text-blue-600 text-lg">📧</span>
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-slate-800">Personligt brev</div>
+                            <div className="text-xs text-slate-500">PDF-dokument</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-bold text-slate-800">Personligt brev</div>
-                          <div className="text-xs text-slate-500">PDF-dokument</div>
+                        <div className="flex items-center gap-2 text-blue-600 group-hover:text-blue-700">
+                          <span className="text-xs font-medium">Ladda ner</span>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                          </svg>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-blue-600 group-hover:text-blue-700">
-                        <span className="text-xs font-medium">Ladda ner</span>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                      </div>
-                    </a>
-                  )}
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-6 border border-dashed border-slate-300 text-center">
+                    <div className="text-3xl mb-2">📋</div>
+                    <p className="text-sm text-slate-500">Kandidaten har inte laddat upp några dokument ännu.</p>
+                  </div>
+                )
+              ) : (
+                <div className="bg-slate-100 rounded-xl p-6 border border-dashed border-slate-300 text-center">
+                  <div className="text-4xl mb-3">🔒</div>
+                  <p className="text-slate-600 mb-3">
+                    Dokument är låsta. Uppgradera till Premium för att ladda ner kandidatens CV och personliga brev.
+                  </p>
+                  <Link 
+                    href="/employer/directory"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition shadow-lg shadow-amber-500/20"
+                  >
+                    ⭐ Uppgradera till Premium
+                  </Link>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Actions */}
             <div className="flex flex-wrap gap-4 pt-4 border-t border-slate-100">
