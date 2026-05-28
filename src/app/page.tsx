@@ -125,10 +125,16 @@ export default function Home() {
 
         /* COMPANY LOGOS */
         .hw-logos {
-          max-width: 1200px;
+          max-width: 1280px;
           margin: 0 auto;
-          padding: 0 2rem 2rem;
+          padding: 0 1rem;
           text-align: center;
+        }
+        @media (min-width: 640px) {
+          .hw-logos { padding: 0 1.5rem; }
+        }
+        @media (min-width: 1024px) {
+          .hw-logos { padding: 0 2rem; }
         }
         .hw-logos-label {
           font-size: 11px;
