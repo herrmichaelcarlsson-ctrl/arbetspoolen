@@ -12,21 +12,22 @@ export default function Home() {
     const fetchRecentJobs = async () => {
       const { data } = await supabase
         .from('job_listings')
-        .select(`*, employer_details:employer_company_details(company_name)`)
+        .select(`*, employer:profiles!employer_id(company_name)`)
         .order('created_at', { ascending: false })
         .limit(5);
       if (data) {
         setRecentJobs(data.map((item: any) => ({
           ...item,
-          company_name: item.employer_details?.company_name || null,
+          company_name: item.employer?.company_name || null,
         })));
       }
     };
     const fetchCompanies = async () => {
       const { data } = await supabase
-        .from('employer_company_details')
+        .from('profiles')
         .select('id, company_name, company_logo_url')
         .not('company_logo_url', 'is', null)
+        .eq('role', 'employer')
         .limit(12);
       if (data) setCompanies(data);
     };
