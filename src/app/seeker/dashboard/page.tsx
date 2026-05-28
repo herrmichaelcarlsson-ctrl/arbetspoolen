@@ -41,7 +41,6 @@ export default function SeekerDashboard() {
   const [profileBoostEndsAt, setProfileBoostEndsAt] = useState<string | null>(null);
   const [hasVerifiedBadge, setHasVerifiedBadge] = useState(false);
   const [weeklyViews, setWeeklyViews] = useState(0);
-  const [showCvBuilder, setShowCvBuilder] = useState(false);
   const [selectedCvTheme, setSelectedCvTheme] = useState<'professional' | 'modern' | 'minimal'>('professional');
 
   // Avatar state
@@ -448,100 +447,6 @@ export default function SeekerDashboard() {
                 certificates={certificates}
                 experienceYears={experienceYears}
               />
-
-              {/* Premium Features Section */}
-              <div className="mt-6 space-y-4">
-                <h3 className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">✨ Premium-funktioner</h3>
-                
-                {/* View Stats Card */}
-                <div className="p-4 rounded-xl border border-amber-100 bg-amber-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">📊</span>
-                      <div>
-                        <p className="font-semibold text-[var(--brand-navy)]">Visningsstatistik</p>
-                        <p className="text-xs text-[var(--muted)]">Gratis: {weeklyViews} visningar denna vecka</p>
-                      </div>
-                    </div>
-                    <span className="text-2xl font-bold text-amber-600">{weeklyViews}</span>
-                  </div>
-                </div>
-
-                {/* Profile Boost Card */}
-                <div className={`p-4 rounded-xl border ${profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() ? 'border-green-200 bg-green-50/50' : 'border-purple-100 bg-purple-50/50'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">⚡</span>
-                      <div>
-                        <p className="font-semibold text-[var(--brand-navy)]">Framhäv din profil</p>
-                        {profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() ? (
-                          <p className="text-xs text-green-600">✓ Aktiv t.o.m. {new Date(profileBoostEndsAt).toLocaleDateString('sv-SE')}</p>
-                        ) : (
-                          <p className="text-xs text-[var(--muted)]">49 kr/vecka - Synas överst</p>
-                        )}
-                      </div>
-                    </div>
-                    {!profileBoostEndsAt || new Date(profileBoostEndsAt) <= new Date() ? (
-                      <button
-                        type="button"
-                        onClick={() => purchaseBoost('week')}
-                        className="px-4 py-2 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700"
-                      >
-                        Köp 49 kr
-                      </button>
-                    ) : (
-                      <span className="text-green-600">✓</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Verified Badge Card */}
-                <div className={`p-4 rounded-xl border ${hasVerifiedBadge ? 'border-green-200 bg-green-50/50' : 'border-blue-100 bg-blue-50/50'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">✅</span>
-                      <div>
-                        <p className="font-semibold text-[var(--brand-navy)]">Verifierad yrkesperson</p>
-                        {hasVerifiedBadge ? (
-                          <p className="text-xs text-green-600">✓ Verifierad</p>
-                        ) : (
-                          <p className="text-xs text-[var(--muted)]">99 kr - Verifiera dina certifikat</p>
-                        )}
-                      </div>
-                    </div>
-                    {!hasVerifiedBadge && (
-                      <button
-                        type="button"
-                        onClick={requestVerification}
-                        className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700"
-                      >
-                        Verifiera 99 kr
-                      </button>
-                    )}
-                    {hasVerifiedBadge && <span className="text-green-600">✓</span>}
-                  </div>
-                </div>
-
-                {/* CV Builder Card */}
-                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">📄</span>
-                      <div>
-                        <p className="font-semibold text-[var(--brand-navy)]">CV-byggare</p>
-                        <p className="text-xs text-[var(--muted)]">Gratis - Ladda ner PDF-CV</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowCvBuilder(true)}
-                      className="px-4 py-2 bg-slate-600 text-white text-xs font-semibold rounded-lg hover:bg-slate-700"
-                    >
-                      Bygg CV
-                    </button>
-                  </div>
-                </div>
-              </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-6 mt-8">
 
@@ -1052,60 +957,186 @@ export default function SeekerDashboard() {
 
           </div>
 
-        </div>
-      </main>
-
-      {/* CV Builder Modal */}
-      {showCvBuilder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-[var(--brand-navy)] mb-4">📄 CV-byggare</h2>
+          {/* ============================================================== */}
+          {/* PREMIUM FEATURES & TOOLS (Below Preview)                        */}
+          {/* ============================================================== */}
+          <div className="lg:col-span-5 space-y-4">
             
-            <div className="mb-4">
-              <p className="text-sm font-medium text-[var(--muted)] mb-2">Välj design:</p>
-              <div className="flex gap-2">
+            {/* Section Header */}
+            <div className="flex items-center gap-2 px-1">
+              <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">Verktyg & Premium</span>
+            </div>
+
+            {/* Stats Card - View count */}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[var(--brand-navy)]">Visningsstatistik</p>
+                    <p className="text-xs text-slate-500">Denna vecka</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-3xl font-bold text-amber-600">{weeklyViews}</span>
+                  <span className="text-xs text-slate-400 block">visningar</span>
+                </div>
+              </div>
+              <div className="w-full h-1.5 bg-amber-100 rounded-full overflow-hidden">
+                <div className={`h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all duration-500`} style={{ width: `${Math.min(weeklyViews / 10 * 100, 100)}%` }} />
+              </div>
+            </div>
+
+            {/* Profile Strength Card */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/60 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[var(--brand-navy)]">Profilstyrka</p>
+                  <p className="text-xs text-slate-500">
+                    {(() => {
+                      const filled = [fullName, trade, city, bio, phone, avatarUrl, certificates.length > 0, experienceYears > 0].filter(Boolean).length;
+                      return `${filled}/8 komplett`;
+                    })()}
+                  </p>
+                </div>
+              </div>
+              <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                  style={{ width: `${(() => {
+                    const filled = [fullName, trade, city, bio, phone, avatarUrl, certificates.length > 0, experienceYears > 0].filter(Boolean).length;
+                    return (filled / 8) * 100;
+                  })()}%` }} />
+              </div>
+            </div>
+
+            {/* Boost & Verification Row */}
+            <div className="grid grid-cols-2 gap-3">
+              
+              {/* Profile Boost */}
+              <div className={`rounded-2xl p-4 border transition-all ${
+                profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() 
+                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' 
+                  : 'bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200'
+              }`}>
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">⚡</span>
+                    <span className="text-xs font-semibold text-[var(--brand-navy)]">Framhäv</span>
+                  </div>
+                  {profileBoostEndsAt && new Date(profileBoostEndsAt) > new Date() ? (
+                    <>
+                      <p className="text-[10px] text-green-600 font-medium">✓ Aktiv</p>
+                      <p className="text-[10px] text-slate-500 mt-auto">t.o.m. {new Date(profileBoostEndsAt).toLocaleDateString('sv-SE')}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[10px] text-slate-500 mb-2">49 kr/vecka</p>
+                      <button
+                        onClick={() => purchaseBoost('week')}
+                        className="mt-auto w-full py-2 bg-purple-600 text-white text-[10px] font-bold rounded-lg hover:bg-purple-700 transition"
+                      >
+                        Köp nu
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Verified Badge */}
+              <div className={`rounded-2xl p-4 border transition-all ${
+                hasVerifiedBadge 
+                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' 
+                  : 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
+              }`}>
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">✅</span>
+                    <span className="text-xs font-semibold text-[var(--brand-navy)]">Verifierad</span>
+                  </div>
+                  {hasVerifiedBadge ? (
+                    <>
+                      <p className="text-[10px] text-green-600 font-medium">✓ Verifierad</p>
+                      <p className="text-[10px] text-slate-500 mt-auto">Yrkesperson</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[10px] text-slate-500 mb-2">99 kr</p>
+                      <button
+                        onClick={requestVerification}
+                        className="mt-auto w-full py-2 bg-blue-600 text-white text-[10px] font-bold rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Verifiera
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CV Builder Card */}
+            <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[var(--brand-navy)]">CV-byggare</p>
+                    <p className="text-xs text-slate-500">Gratis för alla</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Theme Selector */}
+              <div className="flex gap-2 mb-4">
                 {(['professional', 'modern', 'minimal'] as const).map((theme) => (
                   <button
                     key={theme}
                     onClick={() => setSelectedCvTheme(theme)}
-                    className={`px-4 py-2 rounded-lg border-2 capitalize transition ${
-                      selectedCvTheme === theme ? 'border-[var(--brand)] bg-blue-50' : 'border-[var(--border)]'
+                    className={`flex-1 py-2 rounded-lg border-2 capitalize text-[10px] font-semibold transition-all ${
+                      selectedCvTheme === theme 
+                        ? 'border-[var(--brand)] bg-blue-50 text-[var(--brand)]' 
+                        : 'border-slate-200 text-slate-500 hover:border-slate-300'
                     }`}
                   >
-                    {theme}
+                    {theme === 'professional' && '🎨'}
+                    {theme === 'modern' && '✨'}
+                    {theme === 'minimal' && '⬜'}
+                    <span className="ml-1">{theme}</span>
                   </button>
                 ))}
               </div>
-            </div>
-            
-            <div className="mb-6 p-4 bg-[var(--surface)] rounded-lg">
-              <p className="text-sm text-[var(--muted)]">Ditt CV kommer inkludera:</p>
-              <ul className="text-xs text-[var(--brand-navy)] mt-2 space-y-1">
-                <li>✓ Namn och yrke</li>
-                <li>✓ Kontaktuppgifter</li>
-                <li>✓ Biografi</li>
-                <li>✓ Erfarenhet ({experienceYears} år)</li>
-                {activeCertificates.length > 0 && <li>✓ Certifikat ({activeCertificates.length})</li>}
-              </ul>
-            </div>
-            
-            <div className="flex gap-3">
+              
               <button
                 onClick={generatePDF}
-                className="flex-1 py-3 bg-[var(--brand)] text-white font-semibold rounded-xl hover:bg-[var(--brand-hover)]"
+                className="w-full py-3 bg-[var(--brand)] text-white font-semibold rounded-xl hover:bg-[var(--brand-hover)] transition flex items-center justify-center gap-2"
               >
-                📥 Ladda ner PDF
-              </button>
-              <button
-                onClick={() => setShowCvBuilder(false)}
-                className="px-4 py-3 text-[var(--muted)] hover:text-[var(--brand-navy)]"
-              >
-                Stäng
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Ladda ner PDF
               </button>
             </div>
+
           </div>
+
         </div>
-      )}
+      </main>
 
       <ImageCropperModal
         imageSrc={selectedImageSrc}
