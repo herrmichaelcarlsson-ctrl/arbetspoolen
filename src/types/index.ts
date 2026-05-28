@@ -28,3 +28,36 @@ export interface CandidateProfile extends Profile {
   cv_url?: string | null;
   cover_letter_url?: string | null;
 }
+
+export interface JobListing {
+  id: string;
+  employer_id: string;
+  title: string;
+  description: string;
+  trade: string;
+  city: string;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  salary_text?: string | null;
+  employment_type: 'heltid' | 'deltid' | 'timmar' | 'säsong' | 'annat';
+  is_urgent: boolean;
+  is_premium: boolean;
+  is_active: boolean;
+  views_count: number;
+  applications_count: number;
+  created_at: string;
+  updated_at: string;
+  expires_at?: string | null;
+}
+
+export interface JobListingWithEmployer extends JobListing {
+  employer?: Profile;
+  company_name?: string;
+  company_logo_url?: string;
+  employer_details?: {
+    company_name?: string;
+    company_logo_url?: string;
+    company_description?: string;
+    company_website?: string;
+  };
+}

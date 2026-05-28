@@ -1,8 +1,35 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { CompanyBanner } from "@/components/CompanyBanner";
+import { supabase } from "@/lib/supabase";
+import { JobListingWithEmployer } from "@/types";
 
 export default function Home() {
+  const [recentJobs, setRecentJobs] = useState<JobListingWithEmployer[]>([]);
+
+  useEffect(() => {
+    const fetchRecentJobs = async () => {
+      const { data } = await supabase
+        .from('job_listings')
+        .select(`
+          *,
+          employer_details:employer_company_details(company_name)
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      if (data) {
+        const transformed = data.map((item: any) => ({
+          ...item,
+          company_name: item.employer_details?.company_name || null,
+        }));
+        setRecentJobs(transformed);
+      }
+    };
+    fetchRecentJobs();
+  }, []);
   return (
     <>
       <style>{`
@@ -342,6 +369,109 @@ export default function Home() {
         .rb-cta .rb-btn-white { background: #fff; color: #1a3a5c; border-color: #fff; }
         .rb-cta .rb-btn-white:hover { background: #f0f7fc; }
 
+        /* JOB LISTINGS */
+        .job-listings-section { padding: 4rem 2rem; }
+        .job-listings-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .job-listings-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 16px;
+        }
+        .job-card-home {
+          background: #fff;
+          border: 1px solid #e8eef4;
+          border-radius: 14px;
+          padding: 1.25rem;
+          text-decoration: none;
+          color: inherit;
+          display: block;
+          transition: all 0.2s;
+          position: relative;
+        }
+        .job-card-home:hover {
+          border-color: #1a5fa8;
+          box-shadow: 0 4px 16px rgba(26, 95, 168, 0.08);
+          transform: translateY(-2px);
+        }
+        .job-card-home .job-badges {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+        .job-card-home .badge {
+          font-size: 10px;
+          font-weight: 600;
+          padding: 2px 8px;
+          border-radius: 99px;
+          text-transform: uppercase;
+        }
+        .job-card-home .badge-urgent { background: #dc2626; color: #fff; }
+        .job-card-home .badge-premium { background: #f0a020; color: #fff; }
+        .job-card-home .job-card-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #1a3a5c;
+          margin: 0 0 6px;
+          line-height: 1.3;
+        }
+        .job-card-home .job-card-company {
+          font-size: 13px;
+          color: #64748b;
+          margin: 0 0 10px;
+        }
+        .job-card-home .job-card-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 12px;
+        }
+        .job-card-home .job-card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 10px;
+          border-top: 1px solid #f1f5f9;
+        }
+        .job-card-home .job-trade {
+          font-size: 11px;
+          padding: 3px 8px;
+          background: #f1f5f9;
+          color: #475569;
+          border-radius: 4px;
+        }
+        .job-card-home .job-time {
+          font-size: 11px;
+          color: #94a3b8;
+        }
+        .view-all-jobs {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 20px;
+          background: #f8fafc;
+          color: #1a5fa8;
+          border-radius: 99px;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 500;
+          border: 1px solid #e8eef4;
+          transition: all 0.2s;
+        }
+        .view-all-jobs:hover {
+          background: #1a5fa8;
+          color: #fff;
+          border-color: #1a5fa8;
+        }
+
         /* FOOTER */
         .rb-footer { 
           padding: 1.5rem 2rem; 
@@ -359,6 +489,8 @@ export default function Home() {
           .rb-trust-stats { gap: 2rem; }
           .rb-how-grid { grid-template-columns: 1fr; }
           .rb-section { padding: 3rem 1.25rem; }
+          .job-listings-section { padding: 3rem 1.25rem; }
+          .job-listings-header { flex-direction: column; align-items: flex-start; }
           .rb-footer { flex-direction: column; gap: 8px; text-align: center; }
         }
       `}</style>
@@ -533,6 +665,42 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* JOB LISTINGS SECTION */}
+        {recentJobs.length > 0 && (
+          <section className="job-listings-section" style={{ background: '#f8fafc' }}>
+            <div className="job-listings-header">
+              <div>
+                <p className="rb-section-label">Lediga tjänster</p>
+                <h2 className="rb-section-title" style={{ margin: 0 }}>Senaste jobben</h2>
+              </div>
+              <a href="/jobs" className="view-all-jobs">
+                Se alla jobb →
+              </a>
+            </div>
+            <div className="job-listings-grid">
+              {recentJobs.map((job) => (
+                <a key={job.id} href={`/jobs/${job.id}`} className="job-card-home">
+                  <div className="job-badges">
+                    {job.is_urgent && <span className="badge badge-urgent">📢 Brådskande</span>}
+                    {job.is_premium && <span className="badge badge-premium">⭐ Premium</span>}
+                  </div>
+                  <h3 className="job-card-title">{job.title}</h3>
+                  {job.company_name && <p className="job-card-company">{job.company_name}</p>}
+                  <div className="job-card-meta">
+                    <span>📍 {job.city}</span>
+                    <span>💼 {job.employment_type === 'heltid' ? 'Heltid' : job.employment_type}</span>
+                    {job.salary_text && <span>💰 {job.salary_text}</span>}
+                  </div>
+                  <div className="job-card-footer">
+                    <span className="job-trade">{job.trade}</span>
+                    <span className="job-time">Just nu</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* FINAL CTA */}
         <section className="rb-cta">
