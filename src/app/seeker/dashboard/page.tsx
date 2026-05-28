@@ -38,6 +38,8 @@ export default function SeekerDashboard() {
   const [isPremium, setIsPremium] = useState(false);
   const [weeklyViews, setWeeklyViews] = useState(0);
   const [isPremiumLocked, setIsPremiumLocked] = useState(true);
+  const [profileBoostEndsAt, setProfileBoostEndsAt] = useState<string | null>(null);
+  const [hasVerifiedBadge, setHasVerifiedBadge] = useState(false);
 
   // Avatar state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -109,7 +111,18 @@ export default function SeekerDashboard() {
           setIsPremium(profile.is_premium || false);
           setAvatarUrl(profile.avatar_url || null);
           setIsPremiumLocked(profile.is_premium_locked ?? true);
+          setProfileBoostEndsAt(profile.profile_boost_ends_at || null);
+          setHasVerifiedBadge(profile.has_verified_badge || false);
         }
+
+        // Load weekly views
+        try {
+          const res = await fetch('/api/profile/views/stats', { headers: { 'x-user-id': user.id } });
+          if (res.ok) {
+            const stats = await res.json();
+            setWeeklyViews(stats.weekly_count || 0);
+          }
+        } catch (e) { /* optional */ }
 
         if (contact) {
           setFullName(contact.full_name || '');
@@ -249,6 +262,38 @@ export default function SeekerDashboard() {
       router.push('/login');
     } catch (err) {
       console.error('Logout error:', err);
+    }
+  };
+
+  // Purchase profile boost
+  const purchaseBoost = async (duration: 'week' | 'month') => {
+    if (!userId) return;
+    try {
+      const res = await fetch('/api/stripe/premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+        body: JSON.stringify({ product: duration === 'week' ? 'candidate_boost' : 'candidate_boost_month' })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      console.error('Purchase error:', err);
+    }
+  };
+
+  // Request verification
+  const requestVerification = async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch('/api/stripe/premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+        body: JSON.stringify({ product: 'verification' })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      console.error('Verification error:', err);
     }
   };
 
