@@ -16,9 +16,8 @@ export default function Home() {
           *,
           employer_details:employer_company_details(company_name)
         `)
-        .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(5);
       
       if (data) {
         const transformed = data.map((item: any) => ({
@@ -472,6 +471,144 @@ export default function Home() {
           border-color: #1a5fa8;
         }
 
+        /* JOB LISTINGS SECTION - Full width scrollable cards */
+        .job-listings-section { padding: 3rem 0; }
+        .job-listings-header {
+          max-width: 1200px;
+          margin: 0 auto 1.5rem;
+          padding: 0 2rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+        }
+        .job-listings-grid {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 2rem;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .job-card-home {
+          display: flex;
+          background: #fff;
+          border-radius: 16px;
+          overflow: hidden;
+          text-decoration: none;
+          color: inherit;
+          transition: all 0.25s ease;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+          border: 1px solid #eef2f7;
+        }
+        .job-card-home:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 24px rgba(26, 95, 168, 0.1);
+          border-color: #1a5fa8;
+        }
+        .job-card-home-accent {
+          width: 5px;
+          background: linear-gradient(180deg, #1a5fa8 0%, #2d7dd2 100%);
+          flex-shrink: 0;
+        }
+        .job-card-home:hover .job-card-home-accent {
+          background: linear-gradient(180deg, #1558a0 0%, #1a5fa8 100%);
+        }
+        .job-card-home-content {
+          flex: 1;
+          padding: 1rem 1.25rem;
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+        }
+        .job-card-home-main { flex: 1; min-width: 0; }
+        .job-card-home-badges { display: flex; gap: 6px; flex-shrink: 0; }
+        .job-card-home .badge {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 10px;
+          font-weight: 600;
+          padding: 4px 10px;
+          border-radius: 99px;
+          text-transform: uppercase;
+        }
+        .job-card-home .badge svg { width: 12px; height: 12px; }
+        .job-card-home .badge-premium { background: linear-gradient(135deg, #f0a020, #e09515); color: #fff; }
+        .job-card-home .badge-urgent { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        .job-card-home-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1a3a5c;
+          margin: 0 0 4px;
+          line-height: 1.3;
+        }
+        .job-card-home-company {
+          font-size: 13px;
+          color: #64748b;
+          margin: 0;
+        }
+        .job-card-home-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          font-size: 13px;
+          color: #475569;
+          margin-top: 6px;
+        }
+        .job-card-home-meta span {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .job-card-home-meta svg { width: 14px; height: 14px; color: #94a3b8; }
+        .job-card-home-right {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          flex-shrink: 0;
+        }
+        .job-card-home-tag {
+          font-size: 12px;
+          font-weight: 500;
+          padding: 5px 12px;
+          background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+          color: #475569;
+          border-radius: 99px;
+          border: 1px solid #e2e8f0;
+          white-space: nowrap;
+        }
+        .job-card-home-time {
+          font-size: 12px;
+          color: #94a3b8;
+          white-space: nowrap;
+        }
+        .job-card-home-arrow {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: #f1f5f9;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          color: #64748b;
+        }
+        .job-card-home-arrow svg { width: 16px; height: 16px; }
+        .job-card-home:hover .job-card-home-arrow {
+          background: #1a5fa8;
+          color: #fff;
+        }
+        @media (max-width: 900px) {
+          .job-card-home-content { flex-wrap: wrap; }
+          .job-card-home-right { width: 100%; justify-content: space-between; margin-top: 8px; }
+        }
+        @media (max-width: 640px) {
+          .job-listings-header { padding: 0 1rem; }
+          .job-listings-grid { padding: 0 1rem; }
+          .job-card-home-meta { gap: 8px; }
+          .job-card-home-right { gap: 1rem; }
+        }
+
         /* FOOTER */
         .rb-footer { 
           padding: 1.5rem 2rem; 
@@ -489,8 +626,8 @@ export default function Home() {
           .rb-trust-stats { gap: 2rem; }
           .rb-how-grid { grid-template-columns: 1fr; }
           .rb-section { padding: 3rem 1.25rem; }
-          .job-listings-section { padding: 3rem 1.25rem; }
-          .job-listings-header { flex-direction: column; align-items: flex-start; }
+          .job-listings-section { padding: 3rem 1rem; }
+          .job-listings-header { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 0 1rem; }
           .rb-footer { flex-direction: column; gap: 8px; text-align: center; }
         }
       `}</style>
@@ -675,26 +812,70 @@ export default function Home() {
                 <h2 className="rb-section-title" style={{ margin: 0 }}>Senaste jobben</h2>
               </div>
               <a href="/jobs" className="view-all-jobs">
-                Se alla jobb →
+                Se alla jobb
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </a>
             </div>
             <div className="job-listings-grid">
               {recentJobs.map((job) => (
                 <a key={job.id} href={`/jobs/${job.id}`} className="job-card-home">
-                  <div className="job-badges">
-                    {job.is_urgent && <span className="badge badge-urgent">📢 Brådskande</span>}
-                    {job.is_premium && <span className="badge badge-premium">⭐ Premium</span>}
-                  </div>
-                  <h3 className="job-card-title">{job.title}</h3>
-                  {job.company_name && <p className="job-card-company">{job.company_name}</p>}
-                  <div className="job-card-meta">
-                    <span>📍 {job.city}</span>
-                    <span>💼 {job.employment_type === 'heltid' ? 'Heltid' : job.employment_type}</span>
-                    {job.salary_text && <span>💰 {job.salary_text}</span>}
-                  </div>
-                  <div className="job-card-footer">
-                    <span className="job-trade">{job.trade}</span>
-                    <span className="job-time">Just nu</span>
+                  <div className="job-card-home-accent" />
+                  <div className="job-card-home-content">
+                    <div className="job-card-home-main">
+                      <div className="job-card-home-badges">
+                        {job.is_premium && (
+                          <span className="badge badge-premium">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            Premium
+                          </span>
+                        )}
+                        {job.is_urgent && (
+                          <span className="badge badge-urgent">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                            </svg>
+                            Brådskande
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="job-card-home-title">{job.title}</h3>
+                      {job.company_name && <p className="job-card-home-company">{job.company_name}</p>}
+                      <div className="job-card-home-meta">
+                        <span>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          </svg>
+                          {job.city}
+                        </span>
+                        <span>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          {job.employment_type === 'heltid' ? 'Heltid' : job.employment_type}
+                        </span>
+                        {job.salary_text && (
+                          <span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {job.salary_text}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="job-card-home-right">
+                      <span className="job-card-home-tag">{job.trade}</span>
+                      <span className="job-card-home-time">Nyligen</span>
+                      <div className="job-card-home-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </a>
               ))}
