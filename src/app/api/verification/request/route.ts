@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-});
+function getSupabaseAdmin() {
+  if (!supabaseUrl || !supabaseServiceKey) return null;
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id');
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return NextResponse.json({ status: 'not_started', submitted_at: null });
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('verification_requests')
       .select('*')
       .eq('profile_id', userId)
@@ -26,10 +29,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({
-      status: data?.status || 'not_started',
-      submitted_at: data?.submitted_at || null
-    });
+    return NextResponse.json({ status: data?.status || 'not_started', submitted_at: data?.submitted_at || null });
   } catch (err) {
     console.error('Verification error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
@@ -39,10 +39,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id');
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
 
     const body = await request.json();
     const { document_url, document_type } = body;
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('verification_requests')
       .upsert({
         profile_id: userId,
@@ -61,10 +61,7 @@ export async function POST(request: NextRequest) {
         submitted_at: new Date().toISOString()
       }, { onConflict: 'profile_id' });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Verification submit error:', err);
