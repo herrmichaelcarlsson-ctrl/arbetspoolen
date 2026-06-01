@@ -1,11 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+
+interface Profile {
+  id: string;
+  is_premium: boolean;
+  role: string;
+  created_at?: string;
+  // Add other fields as needed
+}
+
+interface WebhookResponse {
+  success?: boolean;
+  profile?: Profile;
+  error?: string;
+}
 
 export default function TestPaymentPage() {
   const [userId, setUserId] = useState('d3b07384-d113-4956-a4ed-f7fa9e28f331');
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
 
@@ -16,7 +30,7 @@ export default function TestPaymentPage() {
 
   const [webhookStatus, setWebhookStatus] = useState<string | null>(null);
   const [webhookLoading, setWebhookLoading] = useState(false);
-  const [webhookResponse, setWebhookResponse] = useState<any>(null);
+  const [webhookResponse, setWebhookResponse] = useState<WebhookResponse | null>(null);
 
   // Generate a random UUID for convenience
   const generateRandomUserId = () => {
@@ -31,7 +45,7 @@ export default function TestPaymentPage() {
   };
 
   // Fetch profile status directly from Supabase
-  const checkProfileStatus = async (targetId = userId) => {
+  const checkProfileStatus = useCallback(async (targetId = userId) => {
     if (!targetId || targetId.trim() === '') {
       setProfileError('Please enter a valid user ID first.');
       return;
@@ -56,16 +70,17 @@ export default function TestPaymentPage() {
           setProfile(null);
         }
       } else {
-        setProfile(data);
+        setProfile(data as Profile);
         setProfileError(null);
       }
-    } catch (err: any) {
-      setProfileError(`Failed to fetch profile: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setProfileError(`Failed to fetch profile: ${errorMessage}`);
       setProfile(null);
     } finally {
       setIsFetchingProfile(false);
     }
-  };
+  }, [userId]);
 
   // Trigger Stripe Checkout route
   const handleInitiateCheckout = async () => {
@@ -150,9 +165,10 @@ export default function TestPaymentPage() {
         setWebhookStatus('error');
         setWebhookResponse(data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       setWebhookStatus('error');
-      setWebhookResponse({ error: err.message || 'Failed to simulate webhook' });
+      setWebhookResponse({ error: errorMessage || 'Failed to simulate webhook' });
     } finally {
       setWebhookLoading(false);
     }
@@ -161,7 +177,7 @@ export default function TestPaymentPage() {
   // Run initial check on load
   useEffect(() => {
     checkProfileStatus();
-  }, []);
+  }, [checkProfileStatus]);
 
   return (
     <div className="min-h-screen bg-zinc-50 py-12 px-4 sm:px-6 lg:px-8 font-sans dark:bg-zinc-900">
@@ -260,7 +276,7 @@ export default function TestPaymentPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-zinc-400">Created At:</span> <span className="text-zinc-800 dark:text-zinc-200">{new Date(profile.created_at).toLocaleDateString()}</span>
+                    <span className="text-zinc-400">Created At:</span> <span className="text-zinc-800 dark:text-zinc-200">{profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}</span>
                   </div>
                 </div>
               )}

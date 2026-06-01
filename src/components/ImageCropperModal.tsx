@@ -29,6 +29,7 @@ export default function ImageCropperModal({
   const TARGET_SIZE = 400; // High-quality export size
 
   // Reset state when new image is loaded
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (isOpen) {
       setZoom(1);

@@ -32,45 +32,15 @@ function formatTimeAgo(dateString: string): string {
   return date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
 }
 
-// Clock icon
-const ClockIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
-// Eye icon
-const EyeIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-  </svg>
-);
-
-// Star icon for premium
-const StarIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-  </svg>
-);
-
-// Fire icon for urgent
-const FireIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
-  </svg>
-);
-
 export function JobListingCard({ listing, showCompany = true }: JobListingCardProps) {
   const timeAgo = listing.created_at ? formatTimeAgo(listing.created_at) : '';
 
   const formatSalary = () => {
     if (listing.salary_text) return listing.salary_text;
     if (listing.salary_min && listing.salary_max) {
-      return `${listing.salary_min.toLocaleString('sv-SE')} - ${listing.salary_max.toLocaleString('sv-SE')} kr`;
+      return `${listing.salary_min.toLocaleString('sv-SE')} - ${listing.salary_max.toLocaleString('sv-SE')} kr/mån`;
     }
-    if (listing.salary_min) return `Från ${listing.salary_min.toLocaleString('sv-SE')} kr`;
+    if (listing.salary_min) return `Från ${listing.salary_min.toLocaleString('sv-SE')} kr/mån`;
     return null;
   };
 
@@ -78,229 +48,266 @@ export function JobListingCard({ listing, showCompany = true }: JobListingCardPr
 
   return (
     <Link href={`/jobs/${listing.id}`} className="job-card">
-      <div className="job-card-accent" />
+      {/* Urgency badge overlay */}
+      {listing.is_urgent && (
+        <div className="urgent-banner">
+          <span className="urgent-icon">🔥</span>
+          <span>Brådskande</span>
+        </div>
+      )}
       
-      <div className="job-card-content">
-        <div className="job-header">
-          <div className="job-title-area">
-            <h3 className="job-title">{listing.title}</h3>
-            {showCompany && listing.company_name && (
-              <p className="job-company">{listing.company_name}</p>
-            )}
-          </div>
-          {(listing.is_urgent || listing.is_premium) && (
-            <div className="job-badges">
-              {listing.is_premium && (
-                <span className="job-badge premium">
-                  <StarIcon />
-                  Premium
-                </span>
-              )}
-              {listing.is_urgent && (
-                <span className="job-badge urgent">
-                  <FireIcon />
-                  Brådskande
-                </span>
+      <div className="job-content">
+        {/* Left side with accent */}
+        <div className={`job-accent ${listing.is_urgent ? 'accent-urgent' : listing.is_premium ? 'accent-premium' : ''}`} />
+        
+        {/* Main content */}
+        <div className="job-main">
+          {/* Header row */}
+          <div className="job-header">
+            <div className="job-title-section">
+              <h3 className="job-title">{listing.title}</h3>
+              {showCompany && listing.company_name && (
+                <div className="job-company-row">
+                  <span className="company-icon">🏢</span>
+                  <span className="job-company">{listing.company_name}</span>
+                </div>
               )}
             </div>
-          )}
-        </div>
-
-        <div className="job-meta">
-          <span className="job-meta-item">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {listing.city}
-          </span>
-          <span className="job-meta-item">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            {employmentTypeLabels[listing.employment_type]}
-          </span>
-          {salary && (
-            <span className="job-meta-item salary">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {salary}
-            </span>
-          )}
-        </div>
-
-        <p className="job-description">
-          {listing.description.length > 100 
-            ? listing.description.substring(0, 100) + '...' 
-            : listing.description}
-        </p>
-
-        <div className="job-footer">
-          <span className="job-trade-tag">{listing.trade}</span>
-          <div className="job-info">
-            {listing.views_count > 0 && (
-              <span className="job-stat">
-                <EyeIcon />
-                {listing.views_count}
-              </span>
+            {listing.is_premium && (
+              <div className="premium-badge">
+                <span>⭐</span>
+                <span>Premium</span>
+              </div>
             )}
-            <span className="job-time">
-              <ClockIcon />
-              {timeAgo}
-            </span>
+          </div>
+
+          {/* Meta info row */}
+          <div className="job-meta-row">
+            <div className="meta-item">
+              <span className="meta-icon">📍</span>
+              <span>{listing.city}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-icon">💼</span>
+              <span>{employmentTypeLabels[listing.employment_type] || listing.employment_type}</span>
+            </div>
+            {salary && (
+              <div className="meta-item salary">
+                <span className="meta-icon">💰</span>
+                <span>{salary}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          <p className="job-description">
+            {listing.description.length > 120 
+              ? listing.description.substring(0, 120) + '...' 
+              : listing.description}
+          </p>
+
+          {/* Footer */}
+          <div className="job-footer">
+            <div className="job-tags">
+              <span className="trade-tag">{listing.trade}</span>
+            </div>
+            <div className="job-stats">
+              {listing.views_count > 0 && (
+                <span className="stat">
+                  <span className="stat-icon">👁️</span>
+                  <span>{listing.views_count}</span>
+                </span>
+              )}
+              <span className="stat">
+                <span className="stat-icon">🕐</span>
+                <span>{timeAgo}</span>
+              </span>
+              <span className="apply-hint">
+                Ansök →
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       <style jsx>{`
         .job-card {
-          display: flex;
+          display: block;
+          position: relative;
           background: #fff;
-          border-radius: 20px;
+          border-radius: 24px;
           overflow: hidden;
           text-decoration: none;
           color: inherit;
-          transition: all 0.25s ease;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
-          border: 1px solid #eef2f7;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(226, 232, 240, 0.8);
         }
         .job-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 30px rgba(26, 95, 168, 0.12);
+          transform: translateY(-4px);
+          box-shadow: 0 20px 40px rgba(26, 95, 168, 0.15);
           border-color: #1a5fa8;
         }
-        .job-card-accent {
-          width: 5px;
-          background: linear-gradient(180deg, #1a5fa8 0%, #2d7dd2 100%);
+        .urgent-banner {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          background: linear-gradient(90deg, #ef4444, #dc2626);
+          color: white;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 6px 16px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          z-index: 1;
+        }
+        .urgent-icon { font-size: 12px; }
+        .job-content {
+          display: flex;
+          padding-top: ${listing.is_urgent ? '32px' : '0'};
+        }
+        .job-accent {
+          width: 6px;
+          background: linear-gradient(180deg, #1a5fa8 0%, #3b82f6 100%);
           flex-shrink: 0;
         }
-        .job-card:hover .job-card-accent {
-          background: linear-gradient(180deg, #1558a0 0%, #1a5fa8 100%);
+        .accent-urgent {
+          background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
         }
-        .job-card-content {
+        .accent-premium {
+          background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+        }
+        .job-main {
           flex: 1;
-          padding: 1.25rem 1.5rem;
+          padding: 1.5rem 1.75rem;
         }
         .job-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
+          margin-bottom: 1rem;
           gap: 1rem;
-          margin-bottom: 0.75rem;
         }
-        .job-title-area {
+        .job-title-section {
           flex: 1;
           min-width: 0;
         }
         .job-title {
-          font-size: 17px;
-          font-weight: 600;
-          color: #1a3a5c;
-          margin: 0 0 4px;
+          font-size: 18px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0 0 6px;
           line-height: 1.3;
+          letter-spacing: -0.3px;
         }
-        .job-company {
+        .job-company-row {
           display: flex;
           align-items: center;
-          gap: 5px;
-          font-size: 13px;
-          color: #64748b;
-          margin: 0;
-        }
-        .job-company svg {
-          color: #94a3b8;
-        }
-        .job-badges {
-          display: flex;
           gap: 6px;
-          flex-shrink: 0;
         }
-        .job-badge {
+        .company-icon { font-size: 14px; }
+        .job-company {
+          font-size: 14px;
+          color: #64748b;
+          font-weight: 500;
+        }
+        .premium-badge {
           display: flex;
           align-items: center;
           gap: 4px;
-          font-size: 10px;
+          background: linear-gradient(135deg, #fef3c7, #fde68a);
+          color: #92400e;
+          font-size: 11px;
           font-weight: 600;
-          padding: 4px 10px;
+          padding: 6px 12px;
           border-radius: 99px;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
+          border: 1px solid #fcd34d;
+          flex-shrink: 0;
         }
-        .job-badge.premium {
-          background: linear-gradient(135deg, #f0a020, #e09515);
-          color: #fff;
-        }
-        .job-badge.urgent {
-          background: linear-gradient(135deg, #ef4444, #dc2626);
-          color: #fff;
-        }
-        .job-meta {
+        .job-meta-row {
           display: flex;
           flex-wrap: wrap;
-          gap: 16px;
-          margin-bottom: 0.75rem;
+          gap: 12px;
+          margin-bottom: 1rem;
         }
-        .job-meta-item {
+        .meta-item {
           display: flex;
           align-items: center;
           gap: 5px;
           font-size: 13px;
           color: #475569;
-        }
-        .job-meta-item svg {
-          color: #94a3b8;
-        }
-        .job-meta-item.salary {
-          color: #059669;
+          background: #f8fafc;
+          padding: 6px 12px;
+          border-radius: 8px;
           font-weight: 500;
         }
-        .job-meta-item.salary svg {
+        .meta-item.salary {
+          background: linear-gradient(135deg, #ecfdf5, #d1fae5);
           color: #059669;
+          border: 1px solid #a7f3d0;
         }
+        .meta-icon { font-size: 14px; }
         .job-description {
           font-size: 14px;
           color: #64748b;
-          line-height: 1.6;
-          margin: 0 0 1rem;
+          line-height: 1.7;
+          margin: 0 0 1.25rem;
         }
         .job-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-top: 0.75rem;
+          padding-top: 1rem;
           border-top: 1px solid #f1f5f9;
         }
-        .job-trade-tag {
-          font-size: 12px;
-          font-weight: 500;
-          padding: 5px 12px;
-          background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-          color: #475569;
-          border-radius: 99px;
-          border: 1px solid #e2e8f0;
-        }
-        .job-info {
+        .job-tags {
           display: flex;
-          gap: 12px;
-          align-items: center;
+          gap: 8px;
         }
-        .job-stat, .job-time {
+        .trade-tag {
+          font-size: 12px;
+          font-weight: 600;
+          padding: 6px 14px;
+          background: linear-gradient(135deg, #eff6ff, #dbeafe);
+          color: #1e40af;
+          border-radius: 99px;
+          border: 1px solid #bfdbfe;
+        }
+        .job-stats {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .stat {
           display: flex;
           align-items: center;
           gap: 4px;
           font-size: 12px;
           color: #94a3b8;
         }
-        .job-stat svg, .job-time svg {
-          color: #cbd5e1;
+        .stat-icon { font-size: 13px; }
+        .apply-hint {
+          font-size: 13px;
+          font-weight: 600;
+          color: #1a5fa8;
+          opacity: 0;
+          transform: translateX(-5px);
+          transition: all 0.2s ease;
+        }
+        .job-card:hover .apply-hint {
+          opacity: 1;
+          transform: translateX(0);
         }
         @media (max-width: 640px) {
-          .job-card-content { padding: 1rem; }
+          .job-main { padding: 1.25rem; }
+          .job-title { font-size: 16px; }
           .job-header { flex-direction: column; gap: 8px; }
-          .job-badges { order: -1; }
-          .job-meta { gap: 10px; }
-          .job-meta-item { font-size: 12px; }
+          .job-meta-row { gap: 8px; }
+          .meta-item { font-size: 12px; padding: 5px 10px; }
+          .job-footer { flex-direction: column; gap: 12px; align-items: flex-start; }
+          .apply-hint { opacity: 1; transform: none; }
         }
       `}</style>
     </Link>
@@ -319,11 +326,11 @@ export function JobListingCardSkeleton() {
         <div className="skeleton-meta">
           <div className="skeleton-meta-item" />
           <div className="skeleton-meta-item" />
-          <div className="skeleton-meta-item" style={{ width: 120 }} />
+          <div className="skeleton-meta-item" />
         </div>
         <div className="skeleton-desc" />
         <div className="skeleton-desc" style={{ width: '80%' }} />
-        <div className="skeleton-desc" style={{ width: '60%' }} />
+        <div className="skeleton-desc" style={{ width: '50%' }} />
         <div className="skeleton-footer">
           <div className="skeleton-tag" />
           <div className="skeleton-stats">
@@ -336,72 +343,72 @@ export function JobListingCardSkeleton() {
         .job-card-skeleton {
           display: flex;
           background: #fff;
-          border-radius: 20px;
+          border-radius: 24px;
           overflow: hidden;
           border: 1px solid #eef2f7;
         }
         .skeleton-accent {
-          width: 5px;
-          background: #e8eef4;
+          width: 6px;
+          background: #e2e8f0;
         }
         .skeleton-content {
           flex: 1;
-          padding: 1.25rem 1.5rem;
+          padding: 1.5rem 1.75rem;
         }
         .skeleton-header {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 0.75rem;
+          margin-bottom: 1rem;
         }
         .skeleton-title {
-          height: 22px;
-          background: linear-gradient(90deg, #e8eef4 25%, #f1f5f9 50%, #e8eef4 75%);
+          height: 24px;
+          background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
           background-size: 200% 100%;
-          border-radius: 6px;
-          width: 60%;
+          border-radius: 8px;
+          width: 55%;
           animation: shimmer 1.5s infinite;
         }
         .skeleton-badge {
-          height: 22px;
+          height: 28px;
           width: 80px;
-          background: linear-gradient(90deg, #e8eef4 25%, #f1f5f9 50%, #e8eef4 75%);
+          background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
           background-size: 200% 100%;
           border-radius: 99px;
           animation: shimmer 1.5s infinite;
         }
         .skeleton-meta {
           display: flex;
-          gap: 16px;
-          margin-bottom: 0.75rem;
+          gap: 10px;
+          margin-bottom: 1rem;
         }
         .skeleton-meta-item {
-          height: 16px;
-          width: 80px;
-          background: linear-gradient(90deg, #e8eef4 25%, #f1f5f9 50%, #e8eef4 75%);
+          height: 32px;
+          width: 90px;
+          background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
           background-size: 200% 100%;
-          border-radius: 4px;
+          border-radius: 8px;
           animation: shimmer 1.5s infinite;
         }
         .skeleton-desc {
           height: 14px;
-          background: linear-gradient(90deg, #e8eef4 25%, #f1f5f9 50%, #e8eef4 75%);
+          background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
           background-size: 200% 100%;
           border-radius: 4px;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
           animation: shimmer 1.5s infinite;
         }
         .skeleton-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-top: 0.75rem;
+          padding-top: 1rem;
           border-top: 1px solid #f1f5f9;
-          margin-top: 0.5rem;
+          margin-top: 0.75rem;
         }
         .skeleton-tag {
-          height: 26px;
+          height: 28px;
           width: 100px;
-          background: linear-gradient(90deg, #e8eef4 25%, #f1f5f9 50%, #e8eef4 75%);
+          background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
           background-size: 200% 100%;
           border-radius: 99px;
           animation: shimmer 1.5s infinite;
@@ -411,9 +418,9 @@ export function JobListingCardSkeleton() {
           gap: 12px;
         }
         .skeleton-stat {
-          height: 14px;
+          height: 16px;
           width: 50px;
-          background: linear-gradient(90deg, #e8eef4 25%, #f1f5f9 50%, #e8eef4 75%);
+          background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
           background-size: 200% 100%;
           border-radius: 4px;
           animation: shimmer 1.5s infinite;
@@ -423,7 +430,9 @@ export function JobListingCardSkeleton() {
           100% { background-position: -200% 0; }
         }
         @media (max-width: 640px) {
-          .skeleton-content { padding: 1rem; }
+          .skeleton-content { padding: 1.25rem; }
+          .skeleton-header { flex-direction: column; gap: 10px; }
+          .skeleton-title { width: 70%; }
         }
       `}</style>
     </div>

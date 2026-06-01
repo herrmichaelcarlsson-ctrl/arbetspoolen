@@ -3,48 +3,22 @@
 import Link from "next/link";
 import { LinkButton } from "./ui/Button";
 import { MobileMenu } from "./ui/MobileMenu";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 export function AppShell({ 
   children
 }: { 
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    // Initial fetch
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        fetchProfile(session.user);
-      } else {
-        setUserRole('none');
-      }
-    });
-
-    // Listen to changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        fetchProfile(session.user);
-      } else {
-        setUser(null);
-        setIsPremium(false);
-        setIsAdmin(false);
-        setUserRole('none');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function fetchProfile(userObj: any) {
+  const fetchProfile = useCallback(async (userObj: User) => {
     const { data } = await supabase
       .from('profiles')
       .select('is_premium, is_admin, role')
@@ -72,7 +46,34 @@ export function AppShell({
     } else {
       setUserRole('job_seeker');
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    // Initial fetch
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user);
+      } else {
+        setUserRole('none');
+      }
+    });
+
+    // Listen to changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user);
+      } else {
+        setUser(null);
+        setIsPremium(false);
+        setIsAdmin(false);
+        setUserRole('none');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [fetchProfile]);
 
   return (
     <div className="min-h-full flex flex-col bg-white text-[var(--foreground)]">

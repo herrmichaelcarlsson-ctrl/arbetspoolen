@@ -1,10 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 type VerificationStatus = 'pending' | 'approved' | 'rejected';
+
+interface ProfileData {
+  id: string;
+  trade: string | null;
+  city: string | null;
+  experience_years: number | null;
+  email?: string;
+}
 
 interface VerificationRequest {
   id: string;
@@ -17,13 +25,7 @@ interface VerificationRequest {
   reviewed_by: string | null;
   notes: string | null;
   stripe_payment_id: string | null;
-  // Joined profile data
-  profile?: {
-    trade: string | null;
-    city: string | null;
-    experience_years: number | null;
-    contact_email?: string;
-  };
+  profile?: ProfileData;
 }
 
 export default function AdminVerificationPage() {
@@ -34,11 +36,7 @@ export default function AdminVerificationPage() {
   const [adminNotes, setAdminNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    loadRequests();
-  }, [filter]);
-
-  const loadRequests = async () => {
+  const loadRequests = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -72,16 +70,16 @@ export default function AdminVerificationPage() {
       if (error) throw error;
       
       // Load profile data separately
-      const profileIds = (data || []).map((r: any) => r.profile_id);
+      const profileIds = (data || []).map((r: VerificationRequest) => r.profile_id);
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, trade, city, experience_years')
+        .select('id, trade, city, experience_years, email')
         .in('id', profileIds);
       
-      const profileMap: Record<string, any> = {};
-      (profiles || []).forEach((p: any) => { profileMap[p.id] = p; });
+      const profileMap: Record<string, ProfileData> = {};
+      (profiles || []).forEach((p: ProfileData) => { profileMap[p.id] = p; });
       
-      const requestsWithProfiles = (data || []).map((r: any) => ({
+      const requestsWithProfiles = (data || []).map((r: VerificationRequest) => ({
         ...r,
         profile: profileMap[r.profile_id] || {}
       }));
@@ -92,7 +90,12 @@ export default function AdminVerificationPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
 
   const handleVerificationAction = async (status: 'approved' | 'rejected') => {
     if (!selectedRequest) return;
@@ -218,7 +221,7 @@ export default function AdminVerificationPage() {
                     <div className="text-sm text-slate-500 space-y-1">
                       <p>📍 {req.profile?.city || 'Stad ej angiven'}</p>
                       <p>💼 {req.profile?.experience_years || 0} års erfarenhet</p>
-                      <p>📧 {(req as any).profile?.email || 'E-post saknas'}</p>
+                      <p>📧 {req.profile?.email || 'E-post saknas'}</p>
                       <p>📎 {getDocTypeLabel(req.document_type)}</p>
                       <p>📅 Inlämnad: {new Date(req.submitted_at).toLocaleDateString('sv-SE')}</p>
                       {req.stripe_payment_id && (
